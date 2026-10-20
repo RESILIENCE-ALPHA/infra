@@ -1,0 +1,22 @@
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: allow-routes-from-all
+  namespace: apisix
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      namespace: applications
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      namespace: logging
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      namespace: security
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      namespace: ia
+  to:
+    - group: ""
+      kind: Service

@@ -1,0 +1,21 @@
+# APISIX data plane (Helm release `apisix`, chart apisix-2.15.0). HTTP + HTTPS; MQTT stream removed.
+apisix:
+  admin:
+    allow:
+      ipList:
+        - 127.0.0.1/24
+        - 10.42.0.0/24
+  ssl:
+    enabled: true
+  stream_proxy:
+    enabled: false
+dashboard:
+  enabled: true
+etcd:
+  replicaCount: 1
+ingress-controller:
+  enabled: false
+service:
+  type: LoadBalancer
+  stream:
+    enabled: false

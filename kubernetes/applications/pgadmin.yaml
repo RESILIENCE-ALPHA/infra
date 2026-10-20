@@ -1,0 +1,159 @@
+# pgAdmin (browser UI) for the authentication and payment databases.
+# Login comes from Secret pgadmin-credentials (ExternalSecret <- Vault apps/pgadmin: email, password).
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: pgadmin-credentials
+  namespace: applications
+spec:
+  refreshInterval: "1h"
+  secretStoreRef:
+    name: vault-backend
+    kind: ClusterSecretStore
+  target:
+    name: pgadmin-credentials
+  data:
+    - secretKey: email
+      remoteRef:
+        key: pgadmin           # Vault: apps/pgadmin
+        property: email
+    - secretKey: password
+      remoteRef:
+        key: pgadmin
+        property: password
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pgadmin-servers
+  namespace: applications
+data:
+  servers.json: |
+    {
+      "Servers": {
+        "1": {
+          "Name": "authentication",
+          "Group": "Servers",
+          "Host": "postgres-authentication.applications.svc.cluster.local",
+          "Port": 5432,
+          "MaintenanceDB": "authentication",
+          "Username": "authentication",
+          "SSLMode": "prefer"
+        },
+        "2": {
+          "Name": "payment",
+          "Group": "Servers",
+          "Host": "postgres-payment.applications.svc.cluster.local",
+          "Port": 5432,
+          "MaintenanceDB": "payment",
+          "Username": "payment",
+          "SSLMode": "prefer"
+        }
+      }
+    }
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pgadmin-data
+  namespace: applications
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pgadmin
+  namespace: applications
+  labels:
+    app: pgadmin
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: pgadmin
+  template:
+    metadata:
+      labels:
+        app: pgadmin
+    spec:
+      securityContext:
+        runAsUser: 5050
+        runAsGroup: 5050
+        fsGroup: 5050
+      containers:
+        - name: pgadmin
+          image: dpage/pgadmin4:8.12
+          env:
+            - name: PGADMIN_DEFAULT_EMAIL
+              valueFrom:
+                secretKeyRef: {name: pgadmin-credentials, key: email}
+            - name: PGADMIN_DEFAULT_PASSWORD
+              valueFrom:
+                secretKeyRef: {name: pgadmin-credentials, key: password}
+            - name: PGADMIN_LISTEN_PORT
+              value: "80"
+            - name: PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION
+              value: "True"
+            # TLS is terminated at the APISIX gateway. Trust X-Forwarded-Proto but NOT X-Forwarded-Port
+            # (APISIX sends its internal 9443, which breaks the CSRF referrer/host check -> blank page)
+            - name: PGADMIN_CONFIG_PROXY_X_PORT_COUNT
+              value: "0"
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            httpGet: {path: /misc/ping, port: 80}
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/pgadmin
+            - name: servers
+              mountPath: /pgadmin4/servers.json
+              subPath: servers.json
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: pgadmin-data
+        - name: servers
+          configMap:
+            name: pgadmin-servers
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pgadmin
+  namespace: applications
+spec:
+  type: ClusterIP
+  selector:
+    app: pgadmin
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: pgadmin-route
+  namespace: applications
+spec:
+  parentRefs:
+    - name: main-gateway
+      namespace: apisix
+  hostnames:
+    - pgadmin.karim-portfolio.xyz
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: pgadmin
+          port: 80

@@ -1,0 +1,50 @@
+---
+- name: Deploy Altitude0 Applications to k3s
+  hosts: k3s_nodes
+  become: yes
+  vars:
+    env_name: staging
+    kubeconfig: /etc/rancher/k3s/k3s.yaml
+    postgres_image: "postgres:16"
+    databases:
+      - authentication
+      - payment
+    namespaces:
+      - applications
+      - logging
+      - security
+      - ia
+
+  tasks:
+    - name: Install dependencies for Kubernetes modules via APT
+      apt:
+        name:
+          - python3-kubernetes
+          - python3-yaml
+        state: present
+
+    - name: Wait for k3s to be ready
+      command: k3s kubectl wait --for=condition=Ready node --all --timeout=180s
+      environment:
+        KUBECONFIG: "{{ kubeconfig }}"
+      changed_when: false
+
+    - name: Create namespaces
+      kubernetes.core.k8s:
+        kubeconfig: "{{ kubeconfig }}"
+        api_version: v1
+        kind: Namespace
+        name: "{{ item }}"
+        state: present
+      loop: "{{ namespaces }}"
+
+    - name: Deploy Postgres (one server per database)
+      kubernetes.core.k8s:
+        kubeconfig: "{{ kubeconfig }}"
+        state: present
+        definition: "{{ lookup('template', '../kubernetes/applications/postgres.yaml') }}"
+      vars:
+        namespace: applications
+        image: "{{ postgres_image }}"
+        db_name: "{{ item }}"
+      loop: "{{ databases }}"

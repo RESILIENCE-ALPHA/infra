@@ -1,0 +1,13 @@
+# kubernetes/security/modsecurity-config.yaml
+apiVersion: v1                                                                                                                         
+kind: ConfigMap                                                                                                                        
+metadata:                                                                                                                              
+  name: modsecurity-config                                                                                                             
+  namespace: security                                                                                                                    
+data:                                                                                                                                  
+  modsecurity-override.conf: |   
+    # change to "On" when ready to enforce                                                                                                      
+    SecRuleEngine DetectionOnly                                                                  
+    SecRequestBodyAccess On                                                                                                            
+    SecResponseBodyAccess Off
+    

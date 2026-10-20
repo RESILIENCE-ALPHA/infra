@@ -1,0 +1,41 @@
+# TLS certificates for the gateway listeners (secrets live in the gateway's namespace).
+# Switch issuerRef to letsencrypt-prod once the staging run succeeds.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: grafana-tls
+  namespace: apisix
+spec:
+  secretName: grafana-tls
+  dnsNames: [grafana.karim-portfolio.xyz]
+  issuerRef: {name: letsencrypt-prod, kind: ClusterIssuer}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: pgadmin-tls
+  namespace: apisix
+spec:
+  secretName: pgadmin-tls
+  dnsNames: [pgadmin.karim-portfolio.xyz]
+  issuerRef: {name: letsencrypt-prod, kind: ClusterIssuer}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: vault-tls
+  namespace: apisix
+spec:
+  secretName: vault-tls
+  dnsNames: [vault-ui.karim-portfolio.xyz]
+  issuerRef: {name: letsencrypt-prod, kind: ClusterIssuer}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: apisix-dashboard-tls
+  namespace: apisix
+spec:
+  secretName: apisix-dashboard-tls
+  dnsNames: [apisix-dashboard.karim-portfolio.xyz]
+  issuerRef: {name: letsencrypt-prod, kind: ClusterIssuer}

@@ -1,0 +1,77 @@
+# One Postgres server per database (rendered once per entry of `databases` in deploy-apps.yml).
+# Password: Secret postgres-{{ db_name }}-credentials (key: password), created out of band.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-{{ db_name }}-data
+  namespace: {{ namespace }}
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-{{ db_name }}
+  namespace: {{ namespace }}
+  labels:
+    app: postgres
+    db: {{ db_name }}
+    environment: "{{ env_name }}"
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+    rollingUpdate: null
+  selector:
+    matchLabels:
+      app: postgres
+      db: {{ db_name }}
+  template:
+    metadata:
+      labels:
+        app: postgres
+        db: {{ db_name }}
+        environment: "{{ env_name }}"
+    spec:
+      containers:
+        - name: postgres
+          image: "{{ image }}"
+          env:
+            - name: POSTGRES_DB
+              value: "{{ db_name }}"
+            - name: POSTGRES_USER
+              value: "{{ db_name }}"
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-{{ db_name }}-credentials
+                  key: password
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: postgres-{{ db_name }}-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-{{ db_name }}
+  namespace: {{ namespace }}
+spec:
+  type: ClusterIP
+  selector:
+    app: postgres
+    db: {{ db_name }}
+  ports:
+    - port: 5432
+      targetPort: 5432

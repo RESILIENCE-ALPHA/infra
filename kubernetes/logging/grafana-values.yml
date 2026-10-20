@@ -1,0 +1,26 @@
+persistence:
+   enabled: true
+   size: 10Gi
+   
+admin:
+   existingSecret: grafana-admin   # created out of band, not stored in git
+   userKey: admin-user
+   passwordKey: admin-password
+   
+service:
+   type: ClusterIP # Use ClusterIP if you plan to use an Ingress (like Traefik)
+
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        url: http://prometheus-server.logging.svc.cluster.local
+        isDefault: true
+      - name: Loki
+        type: loki
+        url: http://loki-gateway.logging.svc.cluster.local
+
+initChownData:
+  enabled: false

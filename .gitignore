@@ -1,0 +1,58 @@
+# Terraform
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+tfplan
+*.tfplan
+*.tfvars
+*.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Secrets / credentials (Vault init output holds unseal keys + root token)
+vault-init.json
+vault-keys*
+*unseal*
+*.token
+.env
+.env.*
+*.pem
+*.key
+*.crt
+*.kubeconfig
+kubeconfig*
+k3s.yaml
+
+# Ansible
+*.retry
+.vault_pass
+vault_pass*
+ansible.log
+
+# Helm / local render output
+charts/
+*.tgz
+
+# Backups (pg_dumpall etc.)
+*.sql
+*.dump
+*.bak
+
+# Editors / OS
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+
+# Claude Code local settings
+.claude/settings.local.json
+
+CLAUDE.md
+ansible/inventory.ini

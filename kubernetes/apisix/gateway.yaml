@@ -1,0 +1,64 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: main-gateway
+  namespace: apisix
+spec:
+  gatewayClassName: apisix
+  listeners:
+    # HTTP listener — port 80
+    - name: http
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: All   # accept HTTPRoutes from any namespace
+
+    # HTTPS listeners — port 443, certificates issued by cert-manager (certificates.yaml)
+    - name: https-grafana
+      port: 443
+      protocol: HTTPS
+      hostname: grafana.karim-portfolio.xyz
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: grafana-tls
+      allowedRoutes:
+        namespaces:
+          from: All
+
+    - name: https-pgadmin
+      port: 443
+      protocol: HTTPS
+      hostname: pgadmin.karim-portfolio.xyz
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: pgadmin-tls
+      allowedRoutes:
+        namespaces:
+          from: All
+
+    - name: https-vault
+      port: 443
+      protocol: HTTPS
+      hostname: vault-ui.karim-portfolio.xyz
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: vault-tls
+      allowedRoutes:
+        namespaces:
+          from: All
+
+    - name: https-apisix-dashboard
+      port: 443
+      protocol: HTTPS
+      hostname: apisix-dashboard.karim-portfolio.xyz
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: apisix-dashboard-tls
+      allowedRoutes:
+        namespaces:
+          from: All

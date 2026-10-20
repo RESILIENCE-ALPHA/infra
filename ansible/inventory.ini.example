@@ -1,0 +1,2 @@
+[k3s_nodes]
+k3s-master ansible_host=<IP_address> ansible_user=<machine_username>
