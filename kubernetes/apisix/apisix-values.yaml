@@ -17,5 +17,6 @@ ingress-controller:
   enabled: false
 service:
   type: LoadBalancer
+  externalTrafficPolicy: Local
   stream:
     enabled: false
