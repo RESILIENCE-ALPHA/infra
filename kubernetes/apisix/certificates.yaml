@@ -39,3 +39,23 @@ spec:
   secretName: apisix-dashboard-tls
   dnsNames: [apisix-dashboard.karim-portfolio.xyz]
   issuerRef: {name: letsencrypt-prod, kind: ClusterIssuer}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: auth-tls
+  namespace: apisix
+spec:
+  secretName: auth-tls
+  dnsNames: [auth.karim-portfolio.xyz]
+  issuerRef: {name: letsencrypt-prod, kind: ClusterIssuer}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: payment-tls
+  namespace: apisix
+spec:
+  secretName: payment-tls
+  dnsNames: [payment.karim-portfolio.xyz]
+  issuerRef: {name: letsencrypt-prod, kind: ClusterIssuer}

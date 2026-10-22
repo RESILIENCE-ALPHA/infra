@@ -1,4 +1,4 @@
-# pgAdmin (browser UI) for the authentication and payment databases.
+# pgAdmin (browser UI) for the single Postgres server.
 # Login comes from Secret pgadmin-credentials (ExternalSecret <- Vault apps/pgadmin: email, password).
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
@@ -32,21 +32,12 @@ data:
     {
       "Servers": {
         "1": {
-          "Name": "authentication",
+          "Name": "postgres",
           "Group": "Servers",
-          "Host": "postgres-authentication.applications.svc.cluster.local",
+          "Host": "postgres.applications.svc.cluster.local",
           "Port": 5432,
-          "MaintenanceDB": "authentication",
-          "Username": "authentication",
-          "SSLMode": "prefer"
-        },
-        "2": {
-          "Name": "payment",
-          "Group": "Servers",
-          "Host": "postgres-payment.applications.svc.cluster.local",
-          "Port": 5432,
-          "MaintenanceDB": "payment",
-          "Username": "payment",
+          "MaintenanceDB": "postgres",
+          "Username": "postgres",
           "SSLMode": "prefer"
         }
       }

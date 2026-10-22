@@ -7,8 +7,7 @@
     kubeconfig: /etc/rancher/k3s/k3s.yaml
     postgres_image: "postgres:16"
     databases:
-      - authentication
-      - payment
+      - epsi_pay
     namespaces:
       - applications
       - logging
@@ -38,7 +37,7 @@
         state: present
       loop: "{{ namespaces }}"
 
-    - name: Deploy Postgres (one server per database)
+    - name: Deploy Postgres (one server, one database per entry of `databases`)
       kubernetes.core.k8s:
         kubeconfig: "{{ kubeconfig }}"
         state: present
@@ -46,5 +45,3 @@
       vars:
         namespace: applications
         image: "{{ postgres_image }}"
-        db_name: "{{ item }}"
-      loop: "{{ databases }}"

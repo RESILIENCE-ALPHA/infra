@@ -1,9 +1,26 @@
-# One Postgres server per database (rendered once per entry of `databases` in deploy-apps.yml).
-# Password: Secret postgres-{{ db_name }}-credentials (key: password), created out of band.
+# Single Postgres server hosting every database listed in `databases` in deploy-apps.yml (template, rendered once).
+# Superuser password: Secret postgres-credentials (key: password, ExternalSecret <- Vault apps/postgres).
+# Per database: a role and a database named {{ '<db>' }}, password from Secret postgres-<db, _ replaced by ->-credentials (key: password).
+# The init script only runs on an empty data directory (first start); for an existing server, create them by hand.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init
+  namespace: {{ namespace }}
+data:
+  init-databases.sh: |
+    #!/bin/bash
+    set -e
+{% for db in databases %}
+    psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d postgres \
+      -c "CREATE ROLE {{ db }} LOGIN PASSWORD '${DB_PASSWORD_{{ db | upper }}}'" \
+      -c "CREATE DATABASE {{ db }} OWNER {{ db }}"
+{% endfor %}
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: postgres-{{ db_name }}-data
+  name: postgres-data
   namespace: {{ namespace }}
 spec:
   accessModes: [ReadWriteOnce]
@@ -15,11 +32,10 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: postgres-{{ db_name }}
+  name: postgres
   namespace: {{ namespace }}
   labels:
     app: postgres
-    db: {{ db_name }}
     environment: "{{ env_name }}"
 spec:
   replicas: 1
@@ -29,49 +45,56 @@ spec:
   selector:
     matchLabels:
       app: postgres
-      db: {{ db_name }}
   template:
     metadata:
       labels:
         app: postgres
-        db: {{ db_name }}
         environment: "{{ env_name }}"
     spec:
       containers:
         - name: postgres
           image: "{{ image }}"
           env:
-            - name: POSTGRES_DB
-              value: "{{ db_name }}"
             - name: POSTGRES_USER
-              value: "{{ db_name }}"
+              value: postgres
             - name: PGDATA
               value: /var/lib/postgresql/data/pgdata
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: postgres-{{ db_name }}-credentials
+                  name: postgres-credentials
                   key: password
+{% for db in databases %}
+            - name: DB_PASSWORD_{{ db | upper }}
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-{{ db | replace('_', '-') }}-credentials
+                  key: password
+{% endfor %}
           ports:
             - containerPort: 5432
           volumeMounts:
             - name: data
               mountPath: /var/lib/postgresql/data
+            - name: init
+              mountPath: /docker-entrypoint-initdb.d
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: postgres-{{ db_name }}-data
+            claimName: postgres-data
+        - name: init
+          configMap:
+            name: postgres-init
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: postgres-{{ db_name }}
+  name: postgres
   namespace: {{ namespace }}
 spec:
   type: ClusterIP
   selector:
     app: postgres
-    db: {{ db_name }}
   ports:
     - port: 5432
       targetPort: 5432

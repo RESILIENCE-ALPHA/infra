@@ -1,0 +1,49 @@
+# HTTP basic auth in front of the Swagger hosts (auth.* and payment.*).
+# Credentials come from Vault (apps/swagger-basic-auth: username, password) via the
+# ExternalSecret below, which creates Secret `swagger-basic-auth`. Nothing secret in git.
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: swagger-basic-auth
+  namespace: applications
+spec:
+  refreshInterval: "1h"
+  secretStoreRef:
+    name: vault-backend
+    kind: ClusterSecretStore
+  target:
+    name: swagger-basic-auth
+  data:
+    - secretKey: username
+      remoteRef:
+        key: swagger-basic-auth   # Vault: apps/swagger-basic-auth
+        property: username
+    - secretKey: password
+      remoteRef:
+        key: swagger-basic-auth
+        property: password
+---
+apiVersion: apisix.apache.org/v1alpha1
+kind: Consumer
+metadata:
+  name: swagger-user
+  namespace: applications
+spec:
+  gatewayRef:
+    name: main-gateway
+    namespace: apisix
+  credentials:
+    - type: basic-auth
+      name: swagger-basic-auth
+      secretRef:
+        name: swagger-basic-auth
+---
+apiVersion: apisix.apache.org/v1alpha1
+kind: PluginConfig
+metadata:
+  name: swagger-basic-auth
+  namespace: applications
+spec:
+  plugins:
+    - name: basic-auth
+      config: {}

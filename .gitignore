@@ -56,3 +56,4 @@ Thumbs.db
 
 CLAUDE.md
 ansible/inventory.ini
+scripts/deploy_infra.sh

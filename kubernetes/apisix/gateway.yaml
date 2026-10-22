@@ -62,3 +62,27 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
+
+    - name: https-auth
+      port: 443
+      protocol: HTTPS
+      hostname: auth.karim-portfolio.xyz
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: auth-tls
+      allowedRoutes:
+        namespaces:
+          from: All
+
+    - name: https-payment
+      port: 443
+      protocol: HTTPS
+      hostname: payment.karim-portfolio.xyz
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: payment-tls
+      allowedRoutes:
+        namespaces:
+          from: All

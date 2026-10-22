@@ -1,0 +1,70 @@
+# One-shot seed of the shared Postgres server. Runs to completion, then the pod stays in Completed state.
+# Re-running: kubectl -n applications delete job epsi-pay-database-seed && kubectl apply -f this file.
+# Same database and credentials as the services: one shared Postgres database (postgres-epsi-pay-credentials).
+# The auth and payment Deployments wait for this Job through an init container, which needs read access to Jobs.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: seed-waiter
+  namespace: applications
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: seed-waiter
+  namespace: applications
+rules:
+  - apiGroups: [batch]
+    resources: [jobs]
+    resourceNames: [epsi-pay-database-seed]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: seed-waiter
+  namespace: applications
+subjects:
+  - kind: ServiceAccount
+    name: seed-waiter
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: seed-waiter
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: epsi-pay-database-seed
+  namespace: applications
+  labels:
+    app: epsi-pay-database
+spec:
+  backoffLimit: 6
+  template:
+    metadata:
+      labels:
+        app: epsi-pay-database
+    spec:
+      restartPolicy: OnFailure
+      imagePullSecrets:
+        - name: ghcr-credentials
+      containers:
+        - name: database-seed
+          image: ghcr.io/resilience-alpha/epsi-pay-database:latest
+          imagePullPolicy: Always
+          env:
+            - name: PORT
+              value: "3000"
+            - name: DB_HOST
+              valueFrom: {secretKeyRef: {name: postgres-epsi-pay-credentials, key: host}}
+            - name: DB_PORT
+              valueFrom: {secretKeyRef: {name: postgres-epsi-pay-credentials, key: port}}
+            - name: DB_NAME
+              valueFrom: {secretKeyRef: {name: postgres-epsi-pay-credentials, key: database}}
+            - name: DB_USER
+              valueFrom: {secretKeyRef: {name: postgres-epsi-pay-credentials, key: username}}
+            - name: DB_PASSWORD
+              valueFrom: {secretKeyRef: {name: postgres-epsi-pay-credentials, key: password}}
+            - name: DATABASE_URL
+              value: postgresql://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)
