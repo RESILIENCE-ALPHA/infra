@@ -65,6 +65,10 @@ sed -e 's/{{ namespace }}/applications/g' \
     -e "s/{{ '{{' }}/{{/g" -e "s/{{ '}}' }}/}}/g" \
     kubernetes/security/ghcr-auth.yaml | kubectl apply -f -
 kubectl apply -f kubernetes/applications/postgres-externalsecrets.yaml
+kubectl apply -f kubernetes/applications/database-seed.yaml   # one-shot Job seeding the shared Postgres
+kubectl apply -f kubernetes/applications/auth.yaml
+kubectl apply -f kubernetes/applications/payment.yaml
+kubectl apply -f kubernetes/applications/swagger-basic-auth.yaml   # needs Vault apps/swagger-basic-auth
 kubectl apply -f kubernetes/applications/pgadmin.yaml      # needs Secret pgadmin-credentials (Vault apps/pgadmin)
 kubectl apply -f kubernetes/apisix/certificates.yaml
 kubectl apply -f kubernetes/apisix/gateway.yaml
@@ -72,5 +76,8 @@ kubectl apply -f kubernetes/logging/grafana-externalsecret.yaml
 kubectl apply -f kubernetes/apisix/referencegrant.yaml
 kubectl apply -f kubernetes/security/vault-httproute.yaml
 kubectl apply -f kubernetes/logging/grafana-httproute.yaml
+
+echo "Certificate status (READY must turn True; DNS must point to the node):"
+kubectl -n apisix get certificate
 
 echo "Infrastructure deployment complete."
