@@ -141,6 +141,7 @@ kubectl apply -f kubernetes/applications/swagger-basic-auth.yaml   # needs Vault
 kubectl apply -f kubernetes/applications/pgadmin.yaml      # needs Secret pgadmin-credentials (Vault apps/pgadmin)
 kubectl apply -f kubernetes/apisix/certificates.yaml
 kubectl apply -f kubernetes/apisix/gateway.yaml
+kubectl apply -f kubernetes/apisix/http-to-https-redirect.yaml   # global HTTP->HTTPS redirect (ACME challenge excluded)
 kubectl apply -f kubernetes/logging/grafana-externalsecret.yaml
 kubectl apply -f kubernetes/apisix/referencegrant.yaml
 kubectl apply -f kubernetes/security/vault-httproute.yaml

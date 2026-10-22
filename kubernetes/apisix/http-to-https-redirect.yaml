@@ -1,0 +1,26 @@
+# HTTP -> HTTPS redirect for every host served by the gateway.
+# A global rule is used (not a Gateway API RequestRedirect route): the HTTPRoutes attach to both the
+# http and https listeners, and APISIX does not tell them apart by port, so a redirect route would loop.
+# - filter scheme == http : HTTPS requests are never touched
+# - filter uri !~~ ACME   : cert-manager's HTTP-01 challenge (temporary HTTPRoute on the http listener)
+#   must keep being served in clear text, otherwise certificate renewal breaks
+# - explicit https://$host target: the data plane listens on 9443 behind the Service port 443, so the
+#   plugin's own `http_to_https` would build a URL with :9443
+# - 308 keeps the method and body of non-GET requests (APIs)
+apiVersion: apisix.apache.org/v2
+kind: ApisixGlobalRule
+metadata:
+  name: http-to-https-redirect
+  namespace: apisix
+spec:
+  ingressClassName: apisix
+  plugins:
+    - name: redirect
+      enable: true
+      config:
+        ret_code: 308
+        uri: "https://$host$request_uri"
+        _meta:
+          filter:
+            - ["scheme", "==", "http"]
+            - ["uri", "!", "~~", "^/\\.well-known/acme-challenge/"]
