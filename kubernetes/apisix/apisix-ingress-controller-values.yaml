@@ -2,6 +2,9 @@
 # The admin key is NOT stored here: deploy_infra.sh passes it with --set (config.apisix.adminKey
 # and gatewayProxy.provider.controlPlane.auth.adminKey.value).
 config:
+  # The chart default "auto" adds `server_port in [80,443]` (the Gateway listener ports) to every
+  # route, but APISIX listens on 9080/9443 behind its Service: nothing matches, every host 404s.
+  listenerPortMatchMode: "off"
   apisix:
     baseURL: http://apisix-admin.apisix.svc.cluster.local:9180/apisix/admin
   kubernetes:
