@@ -1,5 +1,5 @@
 # TLS certificates for the gateway listeners (secrets live in the gateway's namespace).
-# Switch issuerRef to letsencrypt-prod once the staging run succeeds.
+# All certificates are issued by the production Let's Encrypt ClusterIssuer (letsencrypt-prod).
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:

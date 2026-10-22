@@ -1,7 +1,7 @@
 variable "environment" {
-  description = "Target environment (staging or production)."
+  description = "Target environment name (used as the `environment` label)."
   type        = string
-  default     = "staging"
+  default     = "prod"
 }
 
 variable "k3s_version" {

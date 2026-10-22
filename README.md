@@ -11,8 +11,11 @@ kubernetes/{applications,logging,security,ia,apisix}   Manifests and Helm values
 
 ## Usage
 ```bash
-terraform init && terraform apply                              # 1. k3s
-ansible-playbook -i ansible/inventory.ini ansible/deploy-apps.yml   # 2. namespaces + Postgres
-bash scripts/deploy_infra.sh                                   # 3. Vault, Loki, Grafana
+terraform init && terraform apply   # k3s, then Ansible (namespaces + Postgres), then deploy_infra.sh
+```
+`terraform apply` runs the three layers in order. To run one by hand:
+```bash
+ansible-playbook -i ansible/inventory.ini ansible/deploy-apps.yml   # namespaces + Postgres
+bash scripts/deploy_infra.sh                                   # Vault, Loki, Grafana, EPSI Pay, routes
 ```
 Vault must be initialised once: `kubectl -n security exec vault-0 -- vault operator init` (store the keys safely, then `vault operator unseal` x3).

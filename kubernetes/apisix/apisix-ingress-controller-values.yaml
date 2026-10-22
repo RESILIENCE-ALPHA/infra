@@ -1,0 +1,17 @@
+# APISIX ingress controller (Helm release `apisix-ingress-controller`, chart 1.2.1).
+# The admin key is NOT stored here: deploy_infra.sh passes it with --set (config.apisix.adminKey
+# and gatewayProxy.provider.controlPlane.auth.adminKey.value).
+config:
+  apisix:
+    baseURL: http://apisix-admin.apisix.svc.cluster.local:9180/apisix/admin
+  kubernetes:
+    enableGatewayAPI: true
+    watchNamespaces: '[]'
+gatewayProxy:
+  createDefault: true
+  provider:
+    type: ControlPlane
+    controlPlane:
+      endpoints:
+        - http://apisix-admin.apisix.svc.cluster.local:9180
+ingressClass: apisix

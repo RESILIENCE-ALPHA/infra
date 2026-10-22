@@ -1,0 +1,14 @@
+# APISIX dashboard (Helm release `apisix-dashboard`, chart 0.8.3).
+# Login and session secret are NOT stored here: deploy_infra.sh passes them with --set
+# (config.authentication.users[0].password and config.authentication.secret).
+config:
+  authentication:
+    users:
+      - username: admin
+  conf:
+    etcd:
+      endpoints:
+        - apisix-etcd.apisix.svc.cluster.local:2379
+    listen:
+      host: 0.0.0.0
+      port: 9000
