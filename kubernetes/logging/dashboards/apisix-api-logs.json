@@ -1,0 +1,1237 @@
+{
+  "uid": "apisix-api-logs",
+  "title": "APISIX \u2192 APIs (access logs)",
+  "description": "APISIX gateway access logs from Loki: traffic, status codes, latency and errors for the EPSI Pay APIs.",
+  "tags": [
+    "apisix",
+    "logs",
+    "loki",
+    "epsi-pay"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "refresh": "30s",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "graphTooltip": 1,
+  "annotations": {
+    "list": []
+  },
+  "links": [],
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "label": "Loki",
+        "type": "datasource",
+        "query": "loki",
+        "current": {},
+        "hide": 0
+      },
+      {
+        "name": "host",
+        "label": "Host",
+        "type": "custom",
+        "query": "auth.karim-portfolio.xyz,payment.karim-portfolio.xyz",
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "includeAll": true,
+        "allValue": "(auth|payment)[.]karim-portfolio[.]xyz",
+        "multi": true,
+        "options": [],
+        "refresh": 1
+      },
+      {
+        "name": "path",
+        "label": "Path regex",
+        "type": "textbox",
+        "query": ".*",
+        "current": {
+          "text": ".*",
+          "value": ".*"
+        },
+        "options": [
+          {
+            "selected": true,
+            "text": ".*",
+            "value": ".*"
+          }
+        ]
+      },
+      {
+        "name": "client",
+        "label": "Client IP regex",
+        "type": "textbox",
+        "query": ".*",
+        "current": {
+          "text": ".*",
+          "value": ".*"
+        },
+        "options": [
+          {
+            "selected": true,
+            "text": ".*",
+            "value": ".*"
+          }
+        ]
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Overview",
+      "type": "row",
+      "datasource": null,
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false
+    },
+    {
+      "id": 2,
+      "title": "Requests",
+      "type": "stat",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource}"
+          },
+          "expr": "sum(count_over_time({namespace=\"apisix\",container=\"apisix\",stream=\"stdout\"} | pattern `<client> - <user> [<_>] <host> \"<method> <uri> <_>\" <status> <bytes> <rt> \"<_>\" \"<ua>\" <upstream> <ustatus> <urt> \"<_>\"` | host=~\"${host}\" | uri=~\"${path}\" | client=~\"${client}\" [$__range]))",
+          "refId": "A",
+          "legendFormat": "",
+          "queryType": "instant"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "area"
+      }
+    },
+    {
+      "id": 3,
+      "title": "2xx / 3xx",
+      "type": "stat",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 4,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource}"
+          },
+          "expr": "sum(count_over_time({namespace=\"apisix\",container=\"apisix\",stream=\"stdout\"} | pattern `<client> - <user> [<_>] <host> \"<method> <uri> <_>\" <status> <bytes> <rt> \"<_>\" \"<ua>\" <upstream> <ustatus> <urt> \"<_>\"` | host=~\"${host}\" | uri=~\"${path}\" | client=~\"${client}\" | status=~\"[23]..\" [$__range]))",
+          "refId": "A",
+          "legendFormat": "",
+          "queryType": "instant"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "green"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "area"
+      }
+    },
+    {
+      "id": 4,
+      "title": "4xx",
+      "type": "stat",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource}"
+          },
+          "expr": "sum(count_over_time({namespace=\"apisix\",container=\"apisix\",stream=\"stdout\"} | pattern `<client> - <user> [<_>] <host> \"<method> <uri> <_>\" <status> <bytes> <rt> \"<_>\" \"<ua>\" <upstream> <ustatus> <urt> \"<_>\"` | host=~\"${host}\" | uri=~\"${path}\" | client=~\"${client}\" | status=~\"4..\" [$__range]))",
+          "refId": "A",
+          "legendFormat": "",
+          "queryType": "instant"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "orange"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              }
+            ]
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "area"
+      }
+    },
+    {
+      "id": 5,
+      "title": "5xx",
+      "type": "stat",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource}"
+          },
+          "expr": "sum(count_over_time({namespace=\"apisix\",container=\"apisix\",stream=\"stdout\"} | pattern `<client> - <user> [<_>] <host> \"<method> <uri> <_>\" <status> <bytes> <rt> \"<_>\" \"<ua>\" <upstream> <ustatus> <urt> \"<_>\"` | host=~\"${host}\" | uri=~\"${path}\" | client=~\"${client}\" | status=~\"5..\" [$__range]))",
+          "refId": "A",
+          "legendFormat": "",
+          "queryType": "instant"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "red"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              }
+            ]
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "area"
+      }
+    },
+    {
+      "id": 6,
+      "title": "Error rate (4xx+5xx)",
+      "type": "stat",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource}"
+          },
+          "expr": "sum(count_over_time({namespace=\"apisix\",container=\"apisix\",stream=\"stdout\"} | pattern `<client> - <user> [<_>] <host> \"<method> <uri> <_>\" <status> <bytes> <rt> \"<_>\" \"<ua>\" <upstream> <ustatus> <urt> \"<_>\"` | host=~\"${host}\" | uri=~\"${path}\" | client=~\"${client}\" | status=~\"[45]..\" [$__range])) / sum(count_over_time({namespace=\"apisix\",container=\"apisix\",stream=\"stdout\"} | pattern `<client> - <user> [<_>] <host> \"<method> <uri> <_>\" <status> <bytes> <rt> \"<_>\" \"<ua>\" <upstream> <ustatus> <urt> \"<_>\"` | host=~\"${host}\" | uri=~\"${path}\" | client=~\"${client}\" [$__range]))",
+          "refId": "A",
+          "legendFormat": "",
+          "queryType": "instant"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.05
+              },
+              {
+                "color": "red",
+                "value": 0.2
+              }
+            ]
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "area"
+      }
+    },
+    {
+      "id": 7,
+      "title": "p95 latency",
+      "type": "stat",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 20,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource}"
+          },
+          "expr": "max(quantile_over_time(0.95, {namespace=\"apisix\",container=\"apisix\",stream=\"stdout\"} | pattern `<client> - <user> [<_>] <host> \"<method> <uri> <_>\" <status> <bytes> <rt> \"<_>\" \"<ua>\" <upstream> <ustatus> <urt> \"<_>\"` | host=~\"${host}\" | uri=~\"${path}\" | client=~\"${client}\" | unwrap rt | __error__=\"\" [$__range]) by (host))",
+          "refId": "A",
+          "legendFormat": "",
+          "queryType": "instant"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.5
+              },
+              {
+                "color": "red",
+                "value": 2
+              }
+            ]
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "area"
+      }
+    },
+    {
+      "id": 8,
+      "title": "Traffic",
+      "type": "row",
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false
+    },
+    {
+      "id": 9,
+      "title": "Requests/s by status class",
+      "type": "timeseries",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 6,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource}"
+          },
+          "expr": "sum by (c) (rate({namespace=\"apisix\",container=\"apisix\",stream=\"stdout\"} | pattern `<client> - <user> [<_>] <host> \"<method> <uri> <_>\" <status> <bytes> <rt> \"<_>\" \"<ua>\" <upstream> <ustatus> <urt> \"<_>\"` | host=~\"${host}\" | uri=~\"${path}\" | client=~\"${client}\" | label_format c=`{{ slice .status 0 1 }}xx` [$__auto]))",
+          "refId": "A",
+          "legendFormat": "{{c}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "fillOpacity": 20,
+            "stacking": {
+              "mode": "normal"
+            },
+            "lineWidth": 1
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "2xx"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "3xx"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "4xx"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "5xx"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "calcs": [
+            "sum"
+          ],
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 10,
+      "title": "Requests/s by host",
+      "type": "timeseries",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 6,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource}"
+          },
+          "expr": "sum by (host) (rate({namespace=\"apisix\",container=\"apisix\",stream=\"stdout\"} | pattern `<client> - <user> [<_>] <host> \"<method> <uri> <_>\" <status> <bytes> <rt> \"<_>\" \"<ua>\" <upstream> <ustatus> <urt> \"<_>\"` | host=~\"${host}\" | uri=~\"${path}\" | client=~\"${client}\" [$__auto]))",
+          "refId": "A",
+          "legendFormat": "{{host}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "fillOpacity": 20,
+            "stacking": {
+              "mode": "normal"
+            },
+            "lineWidth": 1
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "calcs": [
+            "sum"
+          ],
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 11,
+      "title": "Latency (APISIX request time)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 14,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource}"
+          },
+          "expr": "quantile_over_time(0.50, {namespace=\"apisix\",container=\"apisix\",stream=\"stdout\"} | pattern `<client> - <user> [<_>] <host> \"<method> <uri> <_>\" <status> <bytes> <rt> \"<_>\" \"<ua>\" <upstream> <ustatus> <urt> \"<_>\"` | host=~\"${host}\" | uri=~\"${path}\" | client=~\"${client}\" | unwrap rt | __error__=\"\" [$__auto]) by (host)",
+          "refId": "A",
+          "legendFormat": "p50 {{host}}"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource}"
+          },
+          "expr": "quantile_over_time(0.95, {namespace=\"apisix\",container=\"apisix\",stream=\"stdout\"} | pattern `<client> - <user> [<_>] <host> \"<method> <uri> <_>\" <status> <bytes> <rt> \"<_>\" \"<ua>\" <upstream> <ustatus> <urt> \"<_>\"` | host=~\"${host}\" | uri=~\"${path}\" | client=~\"${client}\" | unwrap rt | __error__=\"\" [$__auto]) by (host)",
+          "refId": "B",
+          "legendFormat": "p95 {{host}}"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource}"
+          },
+          "expr": "quantile_over_time(0.99, {namespace=\"apisix\",container=\"apisix\",stream=\"stdout\"} | pattern `<client> - <user> [<_>] <host> \"<method> <uri> <_>\" <status> <bytes> <rt> \"<_>\" \"<ua>\" <upstream> <ustatus> <urt> \"<_>\"` | host=~\"${host}\" | uri=~\"${path}\" | client=~\"${client}\" | unwrap rt | __error__=\"\" [$__auto]) by (host)",
+          "refId": "C",
+          "legendFormat": "p99 {{host}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "fillOpacity": 0,
+            "lineWidth": 1
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "calcs": [
+            "max",
+            "mean"
+          ],
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 12,
+      "title": "Errors/s by host and status",
+      "type": "timeseries",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 14,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource}"
+          },
+          "expr": "sum by (host, status) (rate({namespace=\"apisix\",container=\"apisix\",stream=\"stdout\"} | pattern `<client> - <user> [<_>] <host> \"<method> <uri> <_>\" <status> <bytes> <rt> \"<_>\" \"<ua>\" <upstream> <ustatus> <urt> \"<_>\"` | host=~\"${host}\" | uri=~\"${path}\" | client=~\"${client}\" | status=~\"[45]..\" [$__auto]))",
+          "refId": "A",
+          "legendFormat": "{{host}} {{status}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "fillOpacity": 20,
+            "stacking": {
+              "mode": "normal"
+            },
+            "lineWidth": 1
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "calcs": [
+            "sum"
+          ],
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 13,
+      "title": "Breakdown",
+      "type": "row",
+      "gridPos": {
+        "x": 0,
+        "y": 22,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false
+    },
+    {
+      "id": 14,
+      "title": "Top paths",
+      "type": "table",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 23,
+        "w": 8,
+        "h": 9
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource}"
+          },
+          "expr": "topk(10, sum by (method, uri) (count_over_time({namespace=\"apisix\",container=\"apisix\",stream=\"stdout\"} | pattern `<client> - <user> [<_>] <host> \"<method> <uri> <_>\" <status> <bytes> <rt> \"<_>\" \"<ua>\" <upstream> <ustatus> <urt> \"<_>\"` | host=~\"${host}\" | uri=~\"${path}\" | client=~\"${client}\" [$__range])))",
+          "refId": "A",
+          "legendFormat": "",
+          "queryType": "instant"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "renameByName": {
+              "Value": "requests"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "requests",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "title": "Top client IPs",
+      "type": "table",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 23,
+        "w": 8,
+        "h": 9
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource}"
+          },
+          "expr": "topk(10, sum by (client) (count_over_time({namespace=\"apisix\",container=\"apisix\",stream=\"stdout\"} | pattern `<client> - <user> [<_>] <host> \"<method> <uri> <_>\" <status> <bytes> <rt> \"<_>\" \"<ua>\" <upstream> <ustatus> <urt> \"<_>\"` | host=~\"${host}\" | uri=~\"${path}\" | client=~\"${client}\" [$__range])))",
+          "refId": "A",
+          "legendFormat": "",
+          "queryType": "instant"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "renameByName": {
+              "Value": "requests"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "requests",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "title": "Status codes",
+      "type": "table",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 23,
+        "w": 8,
+        "h": 9
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource}"
+          },
+          "expr": "topk(10, sum by (status) (count_over_time({namespace=\"apisix\",container=\"apisix\",stream=\"stdout\"} | pattern `<client> - <user> [<_>] <host> \"<method> <uri> <_>\" <status> <bytes> <rt> \"<_>\" \"<ua>\" <upstream> <ustatus> <urt> \"<_>\"` | host=~\"${host}\" | uri=~\"${path}\" | client=~\"${client}\" [$__range])))",
+          "refId": "A",
+          "legendFormat": "",
+          "queryType": "instant"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "renameByName": {
+              "Value": "requests"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "requests",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "title": "Top client IPs with 4xx/5xx (scans, brute force)",
+      "type": "table",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 32,
+        "w": 8,
+        "h": 9
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource}"
+          },
+          "expr": "topk(10, sum by (client) (count_over_time({namespace=\"apisix\",container=\"apisix\",stream=\"stdout\"} | pattern `<client> - <user> [<_>] <host> \"<method> <uri> <_>\" <status> <bytes> <rt> \"<_>\" \"<ua>\" <upstream> <ustatus> <urt> \"<_>\"` | host=~\"${host}\" | uri=~\"${path}\" | client=~\"${client}\" | status=~\"[45]..\" [$__range])))",
+          "refId": "A",
+          "legendFormat": "",
+          "queryType": "instant"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {},
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "renameByName": {
+              "Value": "errors"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "errors",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "title": "Top user agents",
+      "type": "table",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 32,
+        "w": 8,
+        "h": 9
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource}"
+          },
+          "expr": "topk(10, sum by (ua) (count_over_time({namespace=\"apisix\",container=\"apisix\",stream=\"stdout\"} | pattern `<client> - <user> [<_>] <host> \"<method> <uri> <_>\" <status> <bytes> <rt> \"<_>\" \"<ua>\" <upstream> <ustatus> <urt> \"<_>\"` | host=~\"${host}\" | uri=~\"${path}\" | client=~\"${client}\" [$__range])))",
+          "refId": "A",
+          "legendFormat": "",
+          "queryType": "instant"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {},
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "renameByName": {
+              "Value": "requests"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "requests",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "title": "Slowest paths (p95, s)",
+      "type": "table",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 32,
+        "w": 8,
+        "h": 9
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource}"
+          },
+          "expr": "topk(10, quantile_over_time(0.95, {namespace=\"apisix\",container=\"apisix\",stream=\"stdout\"} | pattern `<client> - <user> [<_>] <host> \"<method> <uri> <_>\" <status> <bytes> <rt> \"<_>\" \"<ua>\" <upstream> <ustatus> <urt> \"<_>\"` | host=~\"${host}\" | uri=~\"${path}\" | client=~\"${client}\" | unwrap rt | __error__=\"\" [$__range]) by (host, uri))",
+          "refId": "A",
+          "legendFormat": "",
+          "queryType": "instant"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {},
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "renameByName": {
+              "Value": "p95 (s)"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "p95 (s)",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "title": "Logs",
+      "type": "row",
+      "gridPos": {
+        "x": 0,
+        "y": 41,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false
+    },
+    {
+      "id": 21,
+      "title": "4xx / 5xx requests",
+      "type": "logs",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 42,
+        "w": 24,
+        "h": 10
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource}"
+          },
+          "expr": "{namespace=\"apisix\",container=\"apisix\",stream=\"stdout\"} | pattern `<client> - <user> [<_>] <host> \"<method> <uri> <_>\" <status> <bytes> <rt> \"<_>\" \"<ua>\" <upstream> <ustatus> <urt> \"<_>\"` | host=~\"${host}\" | uri=~\"${path}\" | client=~\"${client}\" | status=~\"[45]..\"",
+          "refId": "A",
+          "legendFormat": ""
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": false,
+        "enableLogDetails": true,
+        "sortOrder": "Descending",
+        "dedupStrategy": "none",
+        "prettifyLogMessage": false
+      }
+    },
+    {
+      "id": 22,
+      "title": "Slow requests (> 1s)",
+      "type": "logs",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 52,
+        "w": 12,
+        "h": 10
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource}"
+          },
+          "expr": "{namespace=\"apisix\",container=\"apisix\",stream=\"stdout\"} | pattern `<client> - <user> [<_>] <host> \"<method> <uri> <_>\" <status> <bytes> <rt> \"<_>\" \"<ua>\" <upstream> <ustatus> <urt> \"<_>\"` | host=~\"${host}\" | uri=~\"${path}\" | client=~\"${client}\" | rt > 1",
+          "refId": "A",
+          "legendFormat": ""
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": false,
+        "enableLogDetails": true,
+        "sortOrder": "Descending",
+        "dedupStrategy": "none",
+        "prettifyLogMessage": false
+      }
+    },
+    {
+      "id": 23,
+      "title": "All access logs",
+      "type": "logs",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 52,
+        "w": 12,
+        "h": 10
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource}"
+          },
+          "expr": "{namespace=\"apisix\",container=\"apisix\",stream=\"stdout\"} | pattern `<client> - <user> [<_>] <host> \"<method> <uri> <_>\" <status> <bytes> <rt> \"<_>\" \"<ua>\" <upstream> <ustatus> <urt> \"<_>\"` | host=~\"${host}\" | uri=~\"${path}\" | client=~\"${client}\"",
+          "refId": "A",
+          "legendFormat": ""
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": false,
+        "enableLogDetails": true,
+        "sortOrder": "Descending",
+        "dedupStrategy": "none",
+        "prettifyLogMessage": false
+      }
+    }
+  ]
+}

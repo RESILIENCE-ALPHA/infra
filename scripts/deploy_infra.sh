@@ -2,7 +2,7 @@
 # scripts/deploy_infra.sh
 # Deploys the shared services: External Secrets, APISIX (gateway, ingress controller, dashboard),
 # cert-manager, Vault (security), Loki + Promtail + Prometheus + Grafana (logging), Ollama (ia),
-# the EPSI Pay services, certificates and routes.
+# the EPSI Pay services and front, certificates and routes.
 # VAULT_TOKEN (write access to apps/apisix-admin) lets it read/store the APISIX admin key in Vault.
 # First dashboard install needs APISIX_DASHBOARD_PASSWORD and APISIX_DASHBOARD_SECRET in the environment.
 # Run from the repository root.
@@ -138,11 +138,15 @@ kubectl apply -f kubernetes/applications/database-seed.yaml   # one-shot Job see
 kubectl apply -f kubernetes/applications/auth.yaml
 kubectl apply -f kubernetes/applications/payment.yaml
 kubectl apply -f kubernetes/applications/swagger-basic-auth.yaml   # needs Vault apps/swagger-basic-auth
+kubectl apply -f kubernetes/applications/front.yaml   # SPA + /api/* routes to auth / payment
 kubectl apply -f kubernetes/applications/pgadmin.yaml      # needs Secret pgadmin-credentials (Vault apps/pgadmin)
 kubectl apply -f kubernetes/apisix/certificates.yaml
 kubectl apply -f kubernetes/apisix/gateway.yaml
 kubectl apply -f kubernetes/apisix/http-to-https-redirect.yaml   # global HTTP->HTTPS redirect (ACME challenge excluded)
 kubectl apply -f kubernetes/logging/grafana-externalsecret.yaml
+kubectl -n logging create configmap grafana-dashboard-apisix-api-logs \
+    --from-file=apisix-api-logs.json=kubernetes/logging/dashboards/apisix-api-logs.json \
+    --dry-run=client -o yaml | kubectl label --local -f - grafana_dashboard=1 -o yaml | kubectl apply -f -
 kubectl apply -f kubernetes/apisix/referencegrant.yaml
 kubectl apply -f kubernetes/security/vault-httproute.yaml
 kubectl apply -f kubernetes/logging/grafana-httproute.yaml

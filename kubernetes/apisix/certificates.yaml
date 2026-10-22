@@ -59,3 +59,13 @@ spec:
   secretName: payment-tls
   dnsNames: [payment.karim-portfolio.xyz]
   issuerRef: {name: letsencrypt-prod, kind: ClusterIssuer}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: app-tls
+  namespace: apisix
+spec:
+  secretName: app-tls
+  dnsNames: [app.karim-portfolio.xyz]
+  issuerRef: {name: letsencrypt-prod, kind: ClusterIssuer}

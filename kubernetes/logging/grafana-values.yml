@@ -24,3 +24,10 @@ datasources:
 
 initChownData:
   enabled: false
+
+# Dashboards are loaded from ConfigMaps labelled grafana_dashboard=1 (see deploy_infra.sh).
+sidecar:
+  dashboards:
+    enabled: true
+    label: grafana_dashboard
+    labelValue: "1"

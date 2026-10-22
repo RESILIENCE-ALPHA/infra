@@ -86,3 +86,15 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
+
+    - name: https-app
+      port: 443
+      protocol: HTTPS
+      hostname: app.karim-portfolio.xyz
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: app-tls
+      allowedRoutes:
+        namespaces:
+          from: All

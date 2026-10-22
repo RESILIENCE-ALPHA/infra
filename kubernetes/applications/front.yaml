@@ -1,0 +1,117 @@
+# EPSI Pay front (Vite SPA served by nginx on 8080). The SPA calls its own origin under /api
+# (CSP connect-src 'self'); APISIX routes those calls to auth / payment itself (rules below), so the
+# image's nginx /api relay (API_UPSTREAM) is unused.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: epsi-pay-front
+  namespace: applications
+  labels:
+    app: epsi-pay-front
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: epsi-pay-front
+  template:
+    metadata:
+      labels:
+        app: epsi-pay-front
+    spec:
+      imagePullSecrets:
+        - name: ghcr-credentials
+      containers:
+        - name: front
+          image: ghcr.io/resilience-alpha/epsi-pay-front:sha-47a2693
+          env:
+            # The default (127.0.0.11) is Docker's DNS; nginx's `resolver` needs the cluster DNS here
+            - name: NGINX_RESOLVER
+              value: kube-dns.kube-system.svc.cluster.local
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet: {path: /healthz, port: 8080}
+          livenessProbe:
+            httpGet: {path: /healthz, port: 8080}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: epsi-pay-front
+  namespace: applications
+spec:
+  type: ClusterIP
+  selector:
+    app: epsi-pay-front
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: epsi-pay-front-route
+  namespace: applications
+spec:
+  parentRefs:
+    - name: main-gateway
+      namespace: apisix
+  hostnames:
+    - app.karim-portfolio.xyz
+  rules:
+    # /api/auth/{login,logout,me} -> auth /login etc. Exact paths, so /api/auth/docs never
+    # reaches Swagger without basic auth.
+    - matches:
+        - path: {type: Exact, value: /api/auth/login}
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path: {type: ReplaceFullPath, replaceFullPath: /login}
+      backendRefs:
+        - name: epsi-pay-auth
+          port: 3000
+    - matches:
+        - path: {type: Exact, value: /api/auth/logout}
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path: {type: ReplaceFullPath, replaceFullPath: /logout}
+      backendRefs:
+        - name: epsi-pay-auth
+          port: 3000
+    - matches:
+        - path: {type: Exact, value: /api/auth/me}
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path: {type: ReplaceFullPath, replaceFullPath: /me}
+      backendRefs:
+        - name: epsi-pay-auth
+          port: 3000
+    # /api/payments*, /api/wallets* -> payment
+    - matches:
+        - path: {type: PathPrefix, value: /api/payments}
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path: {type: ReplacePrefixMatch, replacePrefixMatch: /payments}
+      backendRefs:
+        - name: epsi-pay-payment
+          port: 3000
+    - matches:
+        - path: {type: PathPrefix, value: /api/wallets}
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path: {type: ReplacePrefixMatch, replacePrefixMatch: /wallets}
+      backendRefs:
+        - name: epsi-pay-payment
+          port: 3000
+    # Everything else: the SPA
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: epsi-pay-front
+          port: 8080
