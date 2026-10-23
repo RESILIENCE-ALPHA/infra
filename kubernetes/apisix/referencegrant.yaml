@@ -17,6 +17,9 @@ spec:
     - group: gateway.networking.k8s.io
       kind: HTTPRoute
       namespace: ia
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      namespace: headlamp
   to:
     - group: ""
       kind: Service

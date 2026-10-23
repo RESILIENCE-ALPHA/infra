@@ -1,0 +1,33 @@
+# Falco (chart falcosecurity/falco 9.2.1), installed by deploy_infra.sh.
+# Alerts go through falcosidekick to service-ia (ia namespace) for remediation.
+driver:
+  type: modern_ebpf
+
+json_output: true
+
+# 1Gi was hit by the alert feedback loop below (OOM-killed 2026-10-22, node stalled).
+resources:
+  requests: {cpu: 100m, memory: 512Mi}
+  limits: {cpu: 1000m, memory: 1536Mi}
+
+customRules:
+  custom-rules.yaml: |
+    # Only OUTBOUND connections, and never Falco's own traffic: falco -> falcosidekick and
+    # falcosidekick -> service-ia are connections in this namespace, so matching them makes every
+    # alert trigger another alert (that loop OOM-killed Falco). Vault's inbound traffic (ESO, UI)
+    # is not matched either.
+    - rule: Unexpected Outbound Connection In Security Namespace
+      desc: Outbound network connection from an unexpected process in the security namespace
+      condition: >
+        outbound and k8s.ns.name = "security"
+        and not proc.name in (falco, falcosidekick, vault, vault-k8s)
+      output: "Outbound connection in security namespace (user=%user.name command=%proc.cmdline connection=%fd.name pod=%k8s.pod.name)"
+      priority: NOTICE
+      tags: [network, k8s]
+
+falcosidekick:
+  enabled: true
+  config:
+    webhook:
+      address: http://service-ia.ia.svc.cluster.local:5000/remediate
+      minimumpriority: notice

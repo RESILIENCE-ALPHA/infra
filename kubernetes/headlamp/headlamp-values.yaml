@@ -1,0 +1,13 @@
+# Headlamp (Kubernetes web UI), chart headlamp/headlamp 0.46.0, exposed at headlamp.karim-portfolio.xyz.
+# Users log in with a ServiceAccount token (see headlamp-admin.yaml); the pod's own
+# ServiceAccount gets no cluster role, so the public UI never acts with more than the token's rights.
+config:
+  inCluster: true
+  unsafeUseServiceAccountToken: false
+
+clusterRoleBinding:
+  create: false
+
+resources:
+  requests: {cpu: 50m, memory: 64Mi}
+  limits: {memory: 256Mi}

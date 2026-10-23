@@ -1,0 +1,21 @@
+# Login identity for Headlamp: full rights (cluster-admin). Only ever hand out short-lived tokens.
+# Token: kubectl -n headlamp create token headlamp-admin --duration=1h
+# Revoke every token issued so far: kubectl -n headlamp delete sa headlamp-admin, then re-apply this file.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: headlamp-admin
+  namespace: headlamp
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: headlamp-admin
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: headlamp-admin
+    namespace: headlamp

@@ -22,7 +22,8 @@ spec:
         - name: ghcr-credentials
       containers:
         - name: front
-          image: ghcr.io/resilience-alpha/epsi-pay-front:sha-47a2693
+          image: ghcr.io/resilience-alpha/epsi-pay-front:latest
+          imagePullPolicy: Always
           env:
             # The default (127.0.0.11) is Docker's DNS; nginx's `resolver` needs the cluster DNS here
             - name: NGINX_RESOLVER
@@ -98,6 +99,21 @@ spec:
       backendRefs:
         - name: epsi-pay-payment
           port: 3000
+    # TEMPORARY: the front expects GET /wallets as {"wallets": [...]} but payment returns a bare
+    # array, so the dashboard loads forever. PluginConfig/wallets-list-wrap fixes the shape;
+    # remove this rule and that PluginConfig once the app is fixed.
+    - matches:
+        - path: {type: Exact, value: /api/wallets}
+      filters:
+        # No URLRewrite here: the PluginConfig's proxy-rewrite also does /api/wallets -> /wallets
+        - type: ExtensionRef
+          extensionRef:
+            group: apisix.apache.org
+            kind: PluginConfig
+            name: wallets-list-wrap
+      backendRefs:
+        - name: epsi-pay-payment
+          port: 3000
     - matches:
         - path: {type: PathPrefix, value: /api/wallets}
       filters:
@@ -115,3 +131,27 @@ spec:
       backendRefs:
         - name: epsi-pay-front
           port: 8080
+---
+# TEMPORARY (see the /api/wallets rule above): wraps the bare array returned by payment's GET /wallets
+# into {"wallets": [...]}. If-None-Match / ETag are dropped so browsers never reuse a cached bare
+# array through a 304.
+apiVersion: apisix.apache.org/v1alpha1
+kind: PluginConfig
+metadata:
+  name: wallets-list-wrap
+  namespace: applications
+spec:
+  plugins:
+    - name: proxy-rewrite
+      config:
+        uri: /wallets
+        headers:
+          remove: [If-None-Match]
+    - name: response-rewrite
+      config:
+        vars: [[status, "==", 200]]
+        headers:
+          remove: [ETag]
+        filters:
+          - {regex: '^\s*\[', replace: '{"wallets":[', scope: once}
+          - {regex: '\]\s*$', replace: ']}', scope: once}

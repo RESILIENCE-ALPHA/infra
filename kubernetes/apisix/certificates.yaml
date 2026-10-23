@@ -69,3 +69,13 @@ spec:
   secretName: app-tls
   dnsNames: [app.karim-portfolio.xyz]
   issuerRef: {name: letsencrypt-prod, kind: ClusterIssuer}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: headlamp-tls
+  namespace: apisix
+spec:
+  secretName: headlamp-tls
+  dnsNames: [headlamp.karim-portfolio.xyz]
+  issuerRef: {name: letsencrypt-prod, kind: ClusterIssuer}

@@ -1,7 +1,7 @@
 #!/bin/bash
 # scripts/deploy_infra.sh
 # Deploys the shared services: External Secrets, APISIX (gateway, ingress controller, dashboard),
-# cert-manager, Vault (security), Loki + Promtail + Prometheus + Grafana (logging), Ollama (ia),
+# cert-manager, Vault + Falco (security), Loki + Promtail + Prometheus + Grafana (logging), Ollama (ia), Headlamp,
 # the EPSI Pay services and front, certificates and routes.
 # VAULT_TOKEN (write access to apps/apisix-admin) lets it read/store the APISIX admin key in Vault.
 # First dashboard install needs APISIX_DASHBOARD_PASSWORD and APISIX_DASHBOARD_SECRET in the environment.
@@ -19,9 +19,11 @@ helm repo add jetstack https://charts.jetstack.io
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo add external-secrets https://charts.external-secrets.io
 helm repo add apisix https://charts.apiseven.com
+helm repo add falcosecurity https://falcosecurity.github.io/charts
+helm repo add headlamp https://kubernetes-sigs.github.io/headlamp/
 helm repo update
 
-echo "Creating namespaces (applications, logging, security, ia)..."
+echo "Creating namespaces (applications, logging, security, ia, headlamp)..."
 kubectl apply -f kubernetes/namespaces.yaml
 
 # Persistent file-backed storage: dev mode wipes secrets on every restart.
@@ -104,6 +106,12 @@ helm upgrade --install cert-manager jetstack/cert-manager \
 kubectl -n cert-manager rollout status deploy/cert-manager-webhook --timeout=180s
 kubectl apply -f kubernetes/security/clusterissuers.yaml
 
+# Runtime security alerts -> falcosidekick -> service-ia (ia namespace)
+echo "Deploying Falco..."
+helm upgrade --install falco falcosecurity/falco \
+    --namespace security --version 9.2.1 \
+    -f kubernetes/security/falco-values.yaml
+
 echo "Deploying Loki..."
 helm upgrade --install loki grafana/loki \
     --namespace logging \
@@ -126,6 +134,13 @@ echo "Deploying Grafana..."
 helm upgrade --install grafana grafana/grafana \
     --namespace logging \
     -f kubernetes/logging/grafana-values.yml
+
+# Kubernetes web UI; login with a short-lived token of ServiceAccount headlamp-admin (cluster-admin)
+echo "Deploying Headlamp..."
+helm upgrade --install headlamp headlamp/headlamp \
+    --namespace headlamp --version 0.46.0 \
+    -f kubernetes/headlamp/headlamp-values.yaml
+kubectl apply -f kubernetes/headlamp/headlamp-admin.yaml
 
 echo "Applying Vault backend and HTTPRoutes..."
 kubectl apply -f kubernetes/security/vault-backend.yaml
@@ -151,6 +166,7 @@ kubectl apply -f kubernetes/apisix/referencegrant.yaml
 kubectl apply -f kubernetes/security/vault-httproute.yaml
 kubectl apply -f kubernetes/logging/grafana-httproute.yaml
 kubectl apply -f kubernetes/apisix/apisix-dashboard-httproute.yaml
+kubectl apply -f kubernetes/headlamp/headlamp-httproute.yaml
 
 echo "Certificate status (READY must turn True; DNS must point to the node):"
 kubectl -n apisix get certificate

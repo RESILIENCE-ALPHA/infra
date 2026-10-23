@@ -98,3 +98,15 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
+
+    - name: https-headlamp
+      port: 443
+      protocol: HTTPS
+      hostname: headlamp.karim-portfolio.xyz
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: headlamp-tls
+      allowedRoutes:
+        namespaces:
+          from: All
