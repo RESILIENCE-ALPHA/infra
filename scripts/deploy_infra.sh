@@ -1,7 +1,7 @@
 #!/bin/bash
 # scripts/deploy_infra.sh
 # Deploys the shared services: External Secrets, APISIX (gateway, ingress controller, dashboard),
-# cert-manager, Vault + Falco (security), Loki + Promtail + Prometheus + Grafana (logging), Ollama (ia), Headlamp,
+# cert-manager, Vault + Falco (security), Loki + Promtail + Prometheus + Jaeger + Grafana (logging), Ollama (ia), Headlamp,
 # the EPSI Pay services and front, certificates and routes.
 # VAULT_TOKEN (write access to apps/apisix-admin) lets it read/store the APISIX admin key in Vault.
 # First dashboard install needs APISIX_DASHBOARD_PASSWORD and APISIX_DASHBOARD_SECRET in the environment.
@@ -127,6 +127,10 @@ helm upgrade --install prometheus prometheus-community/prometheus \
     --namespace logging \
     -f kubernetes/logging/prometheus-values.yml
 
+# Traces of the EPSI Pay requests (APISIX zipkin plugin + OpenTelemetry auto-instrumentation in auth/payment)
+echo "Deploying Jaeger..."
+kubectl apply -f kubernetes/logging/jaeger.yaml
+
 echo "Deploying Ollama..."
 kubectl apply -f kubernetes/ia/ollama.yaml
 
@@ -158,6 +162,7 @@ kubectl apply -f kubernetes/applications/pgadmin.yaml      # needs Secret pgadmi
 kubectl apply -f kubernetes/apisix/certificates.yaml
 kubectl apply -f kubernetes/apisix/gateway.yaml
 kubectl apply -f kubernetes/apisix/http-to-https-redirect.yaml   # global HTTP->HTTPS redirect (ACME challenge excluded)
+kubectl apply -f kubernetes/apisix/tracing.yaml   # global rule: zipkin spans of auth/payment/front API requests -> Jaeger
 kubectl apply -f kubernetes/logging/grafana-externalsecret.yaml
 kubectl -n logging create configmap grafana-dashboard-apisix-api-logs \
     --from-file=apisix-api-logs.json=kubernetes/logging/dashboards/apisix-api-logs.json \
@@ -165,6 +170,7 @@ kubectl -n logging create configmap grafana-dashboard-apisix-api-logs \
 kubectl apply -f kubernetes/apisix/referencegrant.yaml
 kubectl apply -f kubernetes/security/vault-httproute.yaml
 kubectl apply -f kubernetes/logging/grafana-httproute.yaml
+kubectl apply -f kubernetes/logging/jaeger-ui.yaml   # Jaeger UI route + basic auth (needs Vault apps/jaeger-basic-auth)
 kubectl apply -f kubernetes/apisix/apisix-dashboard-httproute.yaml
 kubectl apply -f kubernetes/headlamp/headlamp-httproute.yaml
 

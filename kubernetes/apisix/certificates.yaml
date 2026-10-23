@@ -79,3 +79,13 @@ spec:
   secretName: headlamp-tls
   dnsNames: [headlamp.karim-portfolio.xyz]
   issuerRef: {name: letsencrypt-prod, kind: ClusterIssuer}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: jaeger-tls
+  namespace: apisix
+spec:
+  secretName: jaeger-tls
+  dnsNames: [jaeger.karim-portfolio.xyz]
+  issuerRef: {name: letsencrypt-prod, kind: ClusterIssuer}

@@ -1,0 +1,144 @@
+# Jaeger v2 (all-in-one: collector + query + UI) for distributed tracing of the EPSI Pay requests.
+# Receivers: OTLP (4317 gRPC / 4318 HTTP) from the auth and payment services (OpenTelemetry Node
+# auto-instrumentation, see auth.yaml / payment.yaml) and Zipkin (9411) from the APISIX `zipkin`
+# plugin (kubernetes/apisix/tracing.yaml). Traces are stored in Badger on a PVC, kept 72h.
+# No public route: read traces in Grafana (Jaeger datasource) or
+# `kubectl -n logging port-forward svc/jaeger 16686` then http://localhost:16686.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jaeger-config
+  namespace: logging
+data:
+  config.yaml: |
+    service:
+      extensions: [jaeger_storage, jaeger_query, healthcheckv2]
+      pipelines:
+        traces:
+          receivers: [otlp, zipkin]
+          processors: [batch]
+          exporters: [jaeger_storage_exporter]
+      telemetry:
+        logs:
+          level: info
+
+    extensions:
+      healthcheckv2:
+        use_v2: true
+        http:
+          endpoint: 0.0.0.0:13133
+      jaeger_query:
+        storage:
+          traces: badger_store
+        http:
+          endpoint: 0.0.0.0:16686
+        grpc:
+          endpoint: 0.0.0.0:16685
+      jaeger_storage:
+        backends:
+          badger_store:
+            badger:
+              directories:
+                keys: /badger/keys
+                values: /badger/values
+              ephemeral: false
+              ttl:
+                spans: 72h
+
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+      zipkin:
+        endpoint: 0.0.0.0:9411
+
+    processors:
+      batch: {}
+
+    exporters:
+      jaeger_storage_exporter:
+        trace_storage: badger_store
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jaeger-data
+  namespace: logging
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jaeger
+  namespace: logging
+  labels:
+    app: jaeger
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate   # Badger holds a lock on its directory (RWO volume)
+  selector:
+    matchLabels:
+      app: jaeger
+  template:
+    metadata:
+      labels:
+        app: jaeger
+    spec:
+      securityContext:
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+      containers:
+        - name: jaeger
+          image: jaegertracing/jaeger:2.20.0   # 2.21+ dropped the v1 HTTP API that Grafana's Jaeger datasource uses
+          args: ["--config", "/etc/jaeger/config.yaml"]
+          ports:
+            - {name: otlp-grpc, containerPort: 4317}
+            - {name: otlp-http, containerPort: 4318}
+            - {name: zipkin, containerPort: 9411}
+            - {name: query-http, containerPort: 16686}
+            - {name: query-grpc, containerPort: 16685}
+            - {name: health, containerPort: 13133}
+          readinessProbe:
+            httpGet: {path: /status, port: 13133}
+          livenessProbe:
+            httpGet: {path: /status, port: 13133}
+            initialDelaySeconds: 10
+          resources:
+            requests: {cpu: 50m, memory: 128Mi}
+            limits: {memory: 512Mi}
+          volumeMounts:
+            - {name: config, mountPath: /etc/jaeger}
+            - {name: data, mountPath: /badger}
+      volumes:
+        - name: config
+          configMap:
+            name: jaeger-config
+        - name: data
+          persistentVolumeClaim:
+            claimName: jaeger-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jaeger
+  namespace: logging
+spec:
+  type: ClusterIP
+  selector:
+    app: jaeger
+  ports:
+    - {name: otlp-grpc, port: 4317, targetPort: 4317}
+    - {name: otlp-http, port: 4318, targetPort: 4318}
+    - {name: zipkin, port: 9411, targetPort: 9411}
+    - {name: query-http, port: 16686, targetPort: 16686}
+    - {name: query-grpc, port: 16685, targetPort: 16685}

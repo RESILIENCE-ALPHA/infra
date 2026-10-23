@@ -1,0 +1,29 @@
+# Tracing of the EPSI Pay requests at the gateway: the APISIX `zipkin` plugin opens the root span of
+# each request and sends it to Jaeger (kubernetes/logging/jaeger.yaml, Zipkin receiver on 9411).
+# It forwards X-B3-* headers upstream, so the spans of epsi-pay-auth / epsi-pay-payment
+# (OpenTelemetry auto-instrumentation, OTEL_PROPAGATORS=b3multi) land in the same trace.
+# `zipkin` rather than `opentelemetry`: it is in APISIX's default plugin list, `opentelemetry` is not
+# (enabling it means overriding the whole list in apisix-values.yaml).
+# - filter scheme == https : plain HTTP only gets the 308 redirect (http-to-https-redirect.yaml)
+# - auth / payment hosts entirely, and only /api/* on the front host (not its static files)
+# Rollback: `kubectl -n apisix delete apisixglobalrule epsi-pay-tracing`.
+apiVersion: apisix.apache.org/v2
+kind: ApisixGlobalRule
+metadata:
+  name: epsi-pay-tracing
+  namespace: apisix
+spec:
+  ingressClassName: apisix
+  plugins:
+    - name: zipkin
+      enable: true
+      config:
+        endpoint: http://jaeger.logging.svc.cluster.local:9411/api/v2/spans
+        sample_ratio: 1
+        service_name: apisix
+        _meta:
+          filter:
+            - ["scheme", "==", "https"]
+            - - "OR"
+              - ["host", "in", ["auth.karim-portfolio.xyz", "payment.karim-portfolio.xyz"]]
+              - ["AND", ["host", "==", "app.karim-portfolio.xyz"], ["uri", "~~", "^/api/"]]

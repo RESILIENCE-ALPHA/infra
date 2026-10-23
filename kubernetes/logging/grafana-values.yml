@@ -21,6 +21,10 @@ datasources:
       - name: Loki
         type: loki
         url: http://loki-gateway.logging.svc.cluster.local
+      - name: Jaeger
+        type: jaeger
+        uid: jaeger
+        url: http://jaeger.logging.svc.cluster.local:16686
 
 initChownData:
   enabled: false

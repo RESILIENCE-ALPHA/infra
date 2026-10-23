@@ -22,6 +22,14 @@ spec:
         - name: wait-for-seed
           image: registry.k8s.io/kubectl:v1.35.4
           command: [kubectl, wait, --for=condition=complete, job/epsi-pay-database-seed, --timeout=600s]
+        # Tracing without touching the app: copies the OpenTelemetry Node auto-instrumentation
+        # (http, express, nestjs-core...) into a shared volume, loaded through NODE_OPTIONS below.
+        # Spans go to Jaeger (kubernetes/logging/jaeger.yaml) and join APISIX's (B3 headers).
+        - name: otel-autoinstrumentation
+          image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-nodejs:0.77.0
+          command: [cp, -r, /autoinstrumentation/., /otel-auto-instrumentation/]
+          volumeMounts:
+            - {name: otel-auto-instrumentation, mountPath: /otel-auto-instrumentation}
       containers:
         - name: auth
           image: ghcr.io/resilience-alpha/epsi-pay-auth:latest
@@ -41,8 +49,37 @@ spec:
               valueFrom: {secretKeyRef: {name: postgres-epsi-pay-credentials, key: password}}
             - name: DATABASE_URL
               value: postgresql://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)
+            - name: NODE_OPTIONS
+              value: --require /otel-auto-instrumentation/autoinstrumentation.js
+            - name: OTEL_SERVICE_NAME
+              value: epsi-pay-auth
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://jaeger.logging.svc.cluster.local:4318
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: http/protobuf
+            - name: OTEL_TRACES_EXPORTER
+              value: otlp
+            - name: OTEL_METRICS_EXPORTER   # Jaeger only takes traces
+              value: none
+            - name: OTEL_LOGS_EXPORTER
+              value: none
+            # b3multi: APISIX's zipkin plugin sends X-B3-* headers
+            - name: OTEL_PROPAGATORS
+              value: tracecontext,baggage,b3multi
+            # No cloud detectors (they probe metadata endpoints at startup)
+            - name: OTEL_NODE_RESOURCE_DETECTORS
+              value: env,host,os,process,serviceinstance,container
+            - name: OTEL_NODE_DISABLED_INSTRUMENTATIONS   # noise: one span per file/dns/socket call
+              value: fs,dns,net
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: deployment.environment.name=prod,k8s.namespace.name=applications
           ports:
             - containerPort: 3000
+          volumeMounts:
+            - {name: otel-auto-instrumentation, mountPath: /otel-auto-instrumentation, readOnly: true}
+      volumes:
+        - name: otel-auto-instrumentation
+          emptyDir: {sizeLimit: 300Mi}
 ---
 apiVersion: v1
 kind: Service

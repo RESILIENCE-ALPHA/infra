@@ -110,3 +110,15 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
+
+    - name: https-jaeger
+      port: 443
+      protocol: HTTPS
+      hostname: jaeger.karim-portfolio.xyz
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: jaeger-tls
+      allowedRoutes:
+        namespaces:
+          from: All
