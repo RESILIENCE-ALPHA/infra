@@ -61,3 +61,4 @@ scripts/deploy_infra.sh
 
 # Ansible local cache
 .ansible/
+.devcontainer
