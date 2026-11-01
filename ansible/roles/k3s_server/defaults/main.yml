@@ -1,0 +1,11 @@
+---
+k3s_version: ""                 # required, set in group_vars
+k3s_flannel_iface: tailscale0
+# Public IP kept as the node's external IP and in the API certificate (required).
+k3s_node_external_ip: ""
+# Base content of /etc/rancher/k3s/config.yaml (dict, rendered as YAML).
+k3s_server_config: {}
+# Extra names/IPs for the API certificate, on top of the public and Tailscale IPs.
+k3s_extra_tls_sans: []
+# Keep ServiceLB (LoadBalancer services such as APISIX) on the control plane only.
+k3s_servicelb_on_server_only: true

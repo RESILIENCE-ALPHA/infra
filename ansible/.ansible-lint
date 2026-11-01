@@ -1,0 +1,8 @@
+---
+profile: production
+exclude_paths:
+  - inventory/hosts.yml
+# The k3s roles share cluster-wide inputs (k3s_version, k3s_flannel_iface, node labels...)
+# set once in inventory/group_vars, so they deliberately don't carry a per-role prefix.
+skip_list:
+  - var-naming[no-role-prefix]

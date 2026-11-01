@@ -1,0 +1,12 @@
+---
+# Pinned k3s version for every node. Upgrade by changing this line, server first:
+#   ansible-playbook playbooks/k3s.yml --limit k3s_server
+#   ansible-playbook playbooks/k3s.yml --limit k3s_agents
+k3s_version: v1.35.4+k3s1
+
+# Node-to-node traffic (API, flannel VXLAN) goes over the Tailscale tunnel.
+k3s_flannel_iface: tailscale0
+
+# Tailscale auth key, only needed to log a NEW node in. Comes from the environment
+# (or a CI secret), never from the repo.
+tailscale_authkey: "{{ lookup('ansible.builtin.env', 'TAILSCALE_AUTHKEY') }}"

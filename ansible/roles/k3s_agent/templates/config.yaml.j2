@@ -1,0 +1,18 @@
+# Managed by Ansible (roles/k3s_agent).
+server: {{ k3s_server_url }}
+token: {{ k3s_token }}
+node-name: {{ k3s_node_name }}
+node-ip: {{ tailscale_ip }}
+flannel-iface: {{ k3s_flannel_iface }}
+{% if k3s_node_labels | length > 0 %}
+node-label:
+{% for label in k3s_node_labels %}
+  - {{ label }}
+{% endfor %}
+{% endif %}
+{% if k3s_node_taints | length > 0 %}
+node-taint:
+{% for taint in k3s_node_taints %}
+  - {{ taint }}
+{% endfor %}
+{% endif %}
