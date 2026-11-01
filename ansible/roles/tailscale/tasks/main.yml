@@ -1,0 +1,57 @@
+---
+- name: Check whether Tailscale is installed
+  ansible.builtin.stat:
+    path: /usr/bin/tailscale
+  register: tailscale_bin
+
+- name: Install Tailscale with the official script
+  ansible.builtin.shell:
+    cmd: set -o pipefail && curl -fsSL https://tailscale.com/install.sh | sh
+    executable: /bin/bash
+  when: not tailscale_bin.stat.exists
+  changed_when: true
+
+- name: Enable and start tailscaled
+  ansible.builtin.systemd_service:
+    name: tailscaled
+    enabled: true
+    state: started
+
+- name: Read Tailscale state
+  ansible.builtin.command: tailscale status --json
+  register: tailscale_status_raw
+  changed_when: false
+  failed_when: false
+
+- name: Parse Tailscale state
+  ansible.builtin.set_fact:
+    tailscale_backend_state: >-
+      {{ (tailscale_status_raw.stdout | from_json).BackendState
+         if tailscale_status_raw.rc == 0 and tailscale_status_raw.stdout | length > 0
+         else 'NoState' }}
+
+- name: Stop if the node is logged out and no auth key is available
+  ansible.builtin.fail:
+    msg: >-
+      Tailscale on {{ inventory_hostname }} is '{{ tailscale_backend_state }}'.
+      Export TAILSCALE_AUTHKEY (admin console > Settings > Keys) or run
+      'sudo tailscale up' on the node, then re-run the playbook.
+  when:
+    - tailscale_backend_state != 'Running'
+    - tailscale_authkey | length == 0
+
+- name: Log the node in to the tailnet
+  ansible.builtin.command:
+    argv: "{{ ['tailscale', 'up', '--authkey', tailscale_authkey, '--hostname', tailscale_hostname] + tailscale_up_extra_args }}"
+  when: tailscale_backend_state != 'Running'
+  changed_when: true
+  no_log: true
+
+- name: Read the node's Tailscale IPv4
+  ansible.builtin.command: tailscale ip -4
+  register: tailscale_ip_raw
+  changed_when: false
+
+- name: Expose the Tailscale IP to the other roles
+  ansible.builtin.set_fact:
+    tailscale_ip: "{{ tailscale_ip_raw.stdout_lines | first }}"

@@ -1,0 +1,11 @@
+---
+galaxy_info:
+  role_name: tailscale
+  author: resilience-alpha
+  description: Installs Tailscale, logs the node in and exposes its tailnet IP as tailscale_ip.
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Ubuntu
+      versions: [jammy, noble]
+dependencies: []

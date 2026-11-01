@@ -1,0 +1,27 @@
+---
+# Installs and configures the k3s cluster: Tailscale on every node, the control plane,
+# then the agents. Safe to re-run: it only changes what differs from the inventory.
+#
+#   cd ansible
+#   ansible-galaxy collection install -r requirements.yml
+#   ansible-playbook playbooks/k3s.yml --check --diff   # dry run first
+#   ansible-playbook playbooks/k3s.yml
+
+- name: Tailscale on every node
+  hosts: k3s_cluster
+  become: true
+  roles:
+    - tailscale
+
+- name: K3s control plane
+  hosts: k3s_server
+  become: true
+  serial: 1
+  roles:
+    - k3s_server
+
+- name: K3s agents
+  hosts: k3s_agents
+  become: true
+  roles:
+    - k3s_agent

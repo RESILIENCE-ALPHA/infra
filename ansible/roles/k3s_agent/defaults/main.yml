@@ -1,0 +1,8 @@
+---
+k3s_version: ""                 # required, must match the server
+k3s_flannel_iface: tailscale0
+# Inventory name of the control plane to join (first host of k3s_server by default).
+k3s_server_host: "{{ groups['k3s_server'] | first }}"
+k3s_node_name: "{{ inventory_hostname }}"
+k3s_node_labels: []
+k3s_node_taints: []

@@ -1,0 +1,7 @@
+---
+# Name of the node on the tailnet (defaults to the inventory name).
+tailscale_hostname: "{{ inventory_hostname }}"
+# Auth key used only when the node is not logged in yet. Empty = node must already be up.
+tailscale_authkey: ""
+# Extra flags for `tailscale up` (e.g. ["--ssh"] to allow Tailscale SSH).
+tailscale_up_extra_args: []

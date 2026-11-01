@@ -1,0 +1,7 @@
+---
+# Content of /etc/rancher/k3s/config.yaml on the control plane. Node IPs and
+# Tailscale settings are added separately by the k3s_server role.
+k3s_server_config:
+  disable:
+    - traefik           # APISIX is the gateway
+  write-kubeconfig-mode: "0644"   # kept from the previous install script; tighten to 0600 once nothing reads it as non-root

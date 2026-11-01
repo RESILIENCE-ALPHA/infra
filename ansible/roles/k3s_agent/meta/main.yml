@@ -1,0 +1,11 @@
+---
+galaxy_info:
+  role_name: k3s_agent
+  author: resilience-alpha
+  description: Joins a node to the k3s cluster as an agent, with node traffic over Tailscale (works in WSL2).
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Ubuntu
+      versions: [jammy, noble]
+dependencies: []

@@ -22,8 +22,8 @@
           - python3-yaml
         state: present
 
-    - name: Wait for k3s to be ready
-      command: k3s kubectl wait --for=condition=Ready node --all --timeout=180s
+    - name: Wait for the k3s control plane to be ready (home workers may be offline)
+      command: k3s kubectl wait --for=condition=Ready node -l node-role.kubernetes.io/control-plane --timeout=180s
       environment:
         KUBECONFIG: "{{ kubeconfig }}"
       changed_when: false
