@@ -20,6 +20,7 @@
   run_once: true
   register: k3s_server_ts_ip
   changed_when: false
+  check_mode: false   # read-only, must run in --check too
 
 - name: Read the cluster join token
   ansible.builtin.slurp:
@@ -56,6 +57,7 @@
   register: k3s_installed
   changed_when: false
   failed_when: false
+  check_mode: false   # read-only, must run in --check too
 
 - name: Install or upgrade k3s agent {{ k3s_version }}
   ansible.builtin.shell:
