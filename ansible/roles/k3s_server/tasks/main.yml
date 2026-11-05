@@ -40,6 +40,23 @@
     mode: "0600"
   notify: Restart k3s
 
+- name: Create the k3s systemd drop-in directory
+  ansible.builtin.file:
+    path: /etc/systemd/system/k3s.service.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Start k3s only once Tailscale has its IP
+  ansible.builtin.template:
+    src: 10-after-tailscale.conf.j2
+    dest: /etc/systemd/system/k3s.service.d/10-after-tailscale.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart k3s
+
 - name: Read the installed k3s version
   ansible.builtin.command: /usr/local/bin/k3s --version
   register: k3s_installed
