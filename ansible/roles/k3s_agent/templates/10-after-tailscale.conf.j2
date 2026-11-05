@@ -6,3 +6,6 @@ After=tailscaled.service
 
 [Service]
 ExecStartPre=/usr/bin/timeout 120 /bin/sh -c 'until ip -4 addr show {{ k3s_flannel_iface }} 2>/dev/null | grep -q "inet "; do sleep 2; done'
+# WSL mounts / as private; pods that mount host paths with propagation
+# (node-exporter, CSI drivers) need it shared, as on a normal Linux server.
+ExecStartPre=/bin/mount --make-rshared /
