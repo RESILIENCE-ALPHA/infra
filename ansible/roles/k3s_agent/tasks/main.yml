@@ -93,6 +93,8 @@
     name: k3s-agent
     enabled: true
     state: started
+  # In --check the install above is skipped, so on a fresh node the unit doesn't exist yet.
+  when: not (ansible_check_mode and k3s_installed.rc != 0)
 
 - name: Apply pending restarts now
   ansible.builtin.meta: flush_handlers
