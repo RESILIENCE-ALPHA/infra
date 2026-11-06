@@ -97,5 +97,5 @@
     /usr/local/bin/k3s kubectl label nodes -l node-role.kubernetes.io/control-plane
     svccontroller.k3s.cattle.io/enablelb=true --overwrite
   register: k3s_lb_label
-  changed_when: "' labeled' in k3s_lb_label.stdout"
+  changed_when: "'not labeled' not in k3s_lb_label.stdout"   # kubectl prints 'not labeled' when nothing changed
   when: k3s_servicelb_on_server_only
