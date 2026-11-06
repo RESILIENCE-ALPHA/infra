@@ -1,0 +1,48 @@
+# Argo CD, chart argo/argo-cd 10.10.5 (Argo CD v3.5.5), installed by ansible/playbooks/argocd.yml.
+# Single-node-sized: no HA, no Dex (local admin only for now), no notifications controller.
+global:
+  domain: argocd.karim-portfolio.xyz
+  # Keep Argo CD on the control plane (apps-node is tainted anyway, this makes it explicit).
+  nodeSelector:
+    node-role.kubernetes.io/control-plane: "true"
+
+configs:
+  params:
+    # TLS will end at the APISIX gateway once argocd.karim-portfolio.xyz gets a route.
+    server.insecure: true
+  cm:
+    admin.enabled: true
+    exec.enabled: false
+    # Track resources with an annotation, so adopted Helm releases keep their own labels.
+    application.resourceTrackingMethod: annotation
+
+dex:
+  enabled: false
+
+notifications:
+  enabled: false
+
+controller:
+  resources:
+    requests: {cpu: 100m, memory: 256Mi}
+    limits: {memory: 768Mi}
+
+server:
+  resources:
+    requests: {cpu: 50m, memory: 64Mi}
+    limits: {memory: 256Mi}
+
+repoServer:
+  resources:
+    requests: {cpu: 50m, memory: 128Mi}
+    limits: {memory: 512Mi}
+
+applicationSet:
+  resources:
+    requests: {cpu: 25m, memory: 64Mi}
+    limits: {memory: 256Mi}
+
+redis:
+  resources:
+    requests: {cpu: 25m, memory: 64Mi}
+    limits: {memory: 192Mi}

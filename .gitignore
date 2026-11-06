@@ -57,7 +57,6 @@ Thumbs.db
 CLAUDE.md
 ansible/inventory.ini
 ansible/inventory/hosts.yml
-scripts/deploy_infra.sh
 
 # Ansible local cache
 .ansible/

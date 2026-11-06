@@ -6,6 +6,8 @@ k3s cluster (control plane on the VPS, worker nodes joined over Tailscale) with 
 main.tf, providers.tf, variables.tf   Terraform: installs k3s (scripts/install_k3s.sh)
 scripts/deploy_infra.sh               Helm: Vault, Loki, Promtail, Prometheus, Grafana; Ollama; HTTPRoutes
 ansible/playbooks/k3s.yml             k3s cluster: Tailscale, control plane, agents (roles in ansible/roles)
+ansible/playbooks/argocd.yml          Argo CD + root app of apps (gitops/root.yaml)
+gitops/apps/                          One Argo CD Application per component (GitOps)
 ansible/deploy-apps.yml               Namespaces + Postgres
 docs/migration-plan.md                Plan to move to Ansible + Argo CD + Terraform (HCP) + CI
 kubernetes/{applications,logging,security,ia,apisix}   Manifests and Helm values, one folder per namespace

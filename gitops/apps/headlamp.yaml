@@ -1,0 +1,34 @@
+# Headlamp (Kubernetes web UI) at headlamp.karim-portfolio.xyz.
+# Adopts the release previously installed by scripts/deploy_infra.sh (same release name,
+# namespace and chart version, so Argo CD takes over the existing objects in place).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: headlamp
+  namespace: argocd
+spec:
+  project: default
+  sources:
+    - repoURL: https://kubernetes-sigs.github.io/headlamp/
+      chart: headlamp
+      targetRevision: 0.46.0
+      helm:
+        releaseName: headlamp
+        valueFiles:
+          - $values/kubernetes/headlamp/headlamp-values.yaml
+    - repoURL: https://github.com/RESILIENCE-ALPHA/infra.git
+      targetRevision: main
+      ref: values
+    - repoURL: https://github.com/RESILIENCE-ALPHA/infra.git
+      targetRevision: main
+      path: kubernetes/headlamp
+      directory:
+        include: "{headlamp-admin.yaml,headlamp-httproute.yaml}"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: headlamp
+  syncPolicy:
+    # No `automated` yet: the first sync is done by hand after reviewing the diff.
+    # Next PR turns on automated sync with prune + selfHeal.
+    syncOptions:
+      - ServerSideApply=true
