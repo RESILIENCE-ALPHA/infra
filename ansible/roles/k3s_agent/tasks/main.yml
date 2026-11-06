@@ -20,6 +20,7 @@
   run_once: true
   register: k3s_server_ts_ip
   changed_when: false
+  check_mode: false   # read-only, must run in --check too
 
 - name: Read the cluster join token
   ansible.builtin.slurp:
@@ -51,11 +52,29 @@
   no_log: true
   notify: Restart k3s-agent
 
+- name: Create the k3s-agent systemd drop-in directory
+  ansible.builtin.file:
+    path: /etc/systemd/system/k3s-agent.service.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Start k3s-agent only once Tailscale has its IP
+  ansible.builtin.template:
+    src: 10-after-tailscale.conf.j2
+    dest: /etc/systemd/system/k3s-agent.service.d/10-after-tailscale.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart k3s-agent
+
 - name: Read the installed k3s version
   ansible.builtin.command: /usr/local/bin/k3s --version
   register: k3s_installed
   changed_when: false
   failed_when: false
+  check_mode: false   # read-only, must run in --check too
 
 - name: Install or upgrade k3s agent {{ k3s_version }}
   ansible.builtin.shell:
@@ -74,6 +93,8 @@
     name: k3s-agent
     enabled: true
     state: started
+  # In --check the install above is skipped, so on a fresh node the unit doesn't exist yet.
+  when: not (ansible_check_mode and k3s_installed.rc != 0)
 
 - name: Apply pending restarts now
   ansible.builtin.meta: flush_handlers
