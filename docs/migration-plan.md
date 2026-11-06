@@ -52,6 +52,18 @@ resource runs `stop_k3s.sh`. Versions are managed in Ansible from now on.
 
 ### Phase 2 — Argo CD replaces `deploy_infra.sh`
 
+Progress:
+
+- [x] 2a — Argo CD bootstrap (`ansible/playbooks/argocd.yml`, values in `gitops/argocd/values.yaml`),
+      root app of apps (`gitops/root.yaml`), Headlamp adopted (`gitops/apps/headlamp.yaml`).
+- [ ] 2b — Headlamp on automated sync; Argo CD UI route + certificate; Argo CD manages itself.
+- [ ] 2c — Observability: Loki, Promtail, Prometheus, Grafana, Jaeger.
+- [ ] 2d — Security: cert-manager, External Secrets, Vault, Falco.
+- [ ] 2e — Gateway: APISIX, ingress controller, dashboard (admin key from Vault via ExternalSecret).
+- [ ] 2f — Applications: Postgres, auth, payment, front, pgadmin, Ollama.
+- [ ] 2g — Delete `scripts/deploy_infra.sh`, `null_resource.deploy_infra`, `null_resource.deploy_apps`.
+
+
 - Bootstrap Argo CD once (Ansible task or `helm install`), then a root `Application`
   (app-of-apps) pointing at `gitops/`.
 - One `Application` per component: external-secrets, apisix (+ ingress controller, dashboard),

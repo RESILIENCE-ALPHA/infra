@@ -1,0 +1,51 @@
+---
+# Installs Argo CD on the control plane and applies the root "app of apps"
+# (gitops/root.yaml). From then on, Argo CD deploys everything under gitops/apps from Git.
+# Safe to re-run: Helm upgrades Argo CD only when the version or values change.
+#
+#   cd ansible
+#   ansible-playbook playbooks/argocd.yml --check --diff
+#   ansible-playbook playbooks/argocd.yml
+
+- name: Argo CD bootstrap
+  hosts: k3s_server
+  become: true
+  run_once: true
+  vars:
+    argocd_chart_version: 10.10.5        # Argo CD v3.5.5
+    argocd_namespace: argocd
+    argocd_kubeconfig: /etc/rancher/k3s/k3s.yaml
+  tasks:
+    - name: Check that helm is available on the control plane
+      ansible.builtin.command: helm version --short
+      register: argocd_helm_version
+      changed_when: false
+      check_mode: false   # read-only, must run in --check too
+
+    - name: Install or upgrade Argo CD {{ argocd_chart_version }}
+      kubernetes.core.helm:
+        name: argocd
+        chart_ref: argo-cd
+        chart_repo_url: https://argoproj.github.io/argo-helm
+        chart_version: "{{ argocd_chart_version }}"
+        release_namespace: "{{ argocd_namespace }}"
+        create_namespace: true
+        values: "{{ lookup('ansible.builtin.file', playbook_dir + '/../../gitops/argocd/values.yaml') | from_yaml }}"
+        kubeconfig: "{{ argocd_kubeconfig }}"
+        wait: true
+        timeout: 10m
+
+    - name: Check whether the Argo CD CRDs exist yet
+      ansible.builtin.command: /usr/local/bin/k3s kubectl get crd applications.argoproj.io
+      register: argocd_crd
+      changed_when: false
+      failed_when: false
+      check_mode: false   # read-only, must run in --check too
+
+    # In --check on a fresh cluster the Helm install above is simulated, so the CRD isn't there yet.
+    - name: Apply the root app of apps
+      when: not (ansible_check_mode and argocd_crd.rc != 0)
+      kubernetes.core.k8s:
+        kubeconfig: "{{ argocd_kubeconfig }}"
+        state: present
+        definition: "{{ lookup('ansible.builtin.file', playbook_dir + '/../../gitops/root.yaml') | from_yaml }}"
