@@ -1,5 +1,8 @@
 # Managed by Ansible (roles/k3s_server). Merged by k3s with config.yaml.
 node-ip: {{ tailscale_ip }}
+# Address the API server advertises to agents (their tunnel and load balancer use it).
+# Defaults to node-external-ip, which home agents can't reach on :6443.
+advertise-address: {{ tailscale_ip }}
 node-external-ip: {{ k3s_node_external_ip }}
 flannel-iface: {{ k3s_flannel_iface }}
 tls-san:
