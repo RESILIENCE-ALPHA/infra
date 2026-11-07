@@ -16,8 +16,6 @@ spec:
     server: https://kubernetes.default.svc
     namespace: logging
   syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
+    # Automated sync paused while moving to the admin namespace (docs/runbooks/move-to-admin-namespace.md).
     syncOptions:
       - ServerSideApply=true
