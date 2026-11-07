@@ -10,6 +10,9 @@ configs:
   params:
     # TLS will end at the APISIX gateway once argocd.karim-portfolio.xyz gets a route.
     server.insecure: true
+    # Diff against a server-side dry-run apply, so defaults that the API server or a CRD
+    # adds (ExternalSecret remoteRef fields, HTTPRoute group/kind...) never show as drift.
+    controller.diff.server.side: "true"
   cm:
     admin.enabled: true
     exec.enabled: false
