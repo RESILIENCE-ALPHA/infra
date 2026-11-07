@@ -1,0 +1,4 @@
+# Promtail (chart grafana/promtail 6.17.1): ships pod logs to Loki.
+config:
+  clients:
+    - url: http://loki-gateway.logging.svc.cluster.local/loki/api/v1/push

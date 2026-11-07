@@ -67,6 +67,8 @@ kind: PersistentVolumeClaim
 metadata:
   name: jaeger-data
   namespace: logging
+  annotations:
+    argocd.argoproj.io/sync-options: Delete=false   # Argo CD never deletes the trace data
 spec:
   accessModes: [ReadWriteOnce]
   storageClassName: local-path

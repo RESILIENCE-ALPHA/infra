@@ -1,0 +1,27 @@
+# Prometheus (metrics) + node-exporter + kube-state-metrics, 10Gi PVC prometheus-server.
+# Adopts the release from deploy_infra.sh.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: prometheus
+  namespace: argocd
+spec:
+  project: default
+  sources:
+    - repoURL: https://prometheus-community.github.io/helm-charts
+      chart: prometheus
+      targetRevision: 29.38.0
+      helm:
+        releaseName: prometheus
+        valueFiles:
+          - $values/kubernetes/logging/prometheus-values.yml
+    - repoURL: https://github.com/RESILIENCE-ALPHA/infra.git
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: logging
+  syncPolicy:
+    # Manual first sync (review the diff), automated in the next PR, as for Headlamp.
+    syncOptions:
+      - ServerSideApply=true

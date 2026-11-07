@@ -1,0 +1,26 @@
+# Promtail (log shipper, DaemonSet) -> Loki. Adopts the release from deploy_infra.sh.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: promtail
+  namespace: argocd
+spec:
+  project: default
+  sources:
+    - repoURL: https://grafana.github.io/helm-charts
+      chart: promtail
+      targetRevision: 6.17.1
+      helm:
+        releaseName: promtail
+        valueFiles:
+          - $values/kubernetes/logging/promtail-values.yml
+    - repoURL: https://github.com/RESILIENCE-ALPHA/infra.git
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: logging
+  syncPolicy:
+    # Manual first sync (review the diff), automated in the next PR, as for Headlamp.
+    syncOptions:
+      - ServerSideApply=true

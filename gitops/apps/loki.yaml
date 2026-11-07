@@ -1,0 +1,27 @@
+# Loki (logs), single binary, 10Gi PVC storage-loki-0. Adopts the release from deploy_infra.sh
+# (same name, namespace and chart version: the StatefulSet and its volume stay as they are).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: loki
+  namespace: argocd
+spec:
+  project: default
+  sources:
+    - repoURL: https://grafana.github.io/helm-charts
+      chart: loki
+      targetRevision: 7.5.0
+      helm:
+        releaseName: loki
+        valueFiles:
+          - $values/kubernetes/logging/loki-values.yml
+    - repoURL: https://github.com/RESILIENCE-ALPHA/infra.git
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: logging
+  syncPolicy:
+    # Manual first sync (review the diff), automated in the next PR, as for Headlamp.
+    syncOptions:
+      - ServerSideApply=true

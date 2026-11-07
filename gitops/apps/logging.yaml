@@ -1,0 +1,21 @@
+# Plain manifests of the logging namespace (kubernetes/logging/kustomization.yaml):
+# Jaeger, Jaeger UI route + basic auth, Grafana route, Grafana admin ExternalSecret,
+# Grafana dashboards (ConfigMaps generated from kubernetes/logging/dashboards/).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: logging
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/RESILIENCE-ALPHA/infra.git
+    targetRevision: main
+    path: kubernetes/logging
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: logging
+  syncPolicy:
+    # Manual first sync (review the diff), automated in the next PR.
+    syncOptions:
+      - ServerSideApply=true

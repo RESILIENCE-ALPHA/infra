@@ -1,0 +1,18 @@
+# Plain manifests for the logging namespace, synced by Argo CD (gitops/apps/logging.yaml).
+# Helm values files in this folder are not listed here: the Helm apps read them directly.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: logging
+resources:
+  - jaeger.yaml
+  - jaeger-ui.yaml
+  - grafana-httproute.yaml
+  - grafana-externalsecret.yaml
+configMapGenerator:
+  - name: grafana-dashboard-apisix-api-logs
+    files:
+      - apisix-api-logs.json=dashboards/apisix-api-logs.json
+    options:
+      disableNameSuffixHash: true
+      labels:
+        grafana_dashboard: "1"   # picked up by the Grafana dashboards sidecar
