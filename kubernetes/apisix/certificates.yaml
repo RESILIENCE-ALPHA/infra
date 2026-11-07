@@ -89,3 +89,13 @@ spec:
   secretName: jaeger-tls
   dnsNames: [jaeger.karim-portfolio.xyz]
   issuerRef: {name: letsencrypt-prod, kind: ClusterIssuer}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: argocd-tls
+  namespace: apisix
+spec:
+  secretName: argocd-tls
+  dnsNames: [argocd.karim-portfolio.xyz]
+  issuerRef: {name: letsencrypt-prod, kind: ClusterIssuer}
