@@ -1,4 +1,4 @@
-# Grafana, 10Gi PVC. Admin login from Vault via ExternalSecret grafana-admin (logging app).
+# Grafana, 10Gi PVC. Admin login from Vault via ExternalSecret grafana-admin (logging app, admin namespace).
 # Adopts the release from deploy_infra.sh.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -20,8 +20,9 @@ spec:
       ref: values
   destination:
     server: https://kubernetes.default.svc
-    namespace: logging
+    namespace: admin
   syncPolicy:
     # Automated sync paused while moving to the admin namespace (docs/runbooks/move-to-admin-namespace.md).
     syncOptions:
       - ServerSideApply=true
+      - CreateNamespace=true

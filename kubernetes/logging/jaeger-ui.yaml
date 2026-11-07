@@ -2,12 +2,12 @@
 # Credentials come from Vault (apps/jaeger-basic-auth: username, password) via the ExternalSecret
 # below, which creates Secret `jaeger-basic-auth`. Nothing secret in git.
 # basic-auth alone would accept any APISIX consumer (e.g. the Swagger one), so consumer-restriction
-# only lets this consumer in. APISIX names it `<namespace>_<name>` (logging_jaeger-user).
+# only lets this consumer in. APISIX names it `<namespace>_<name>` (admin_jaeger-user).
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: jaeger-basic-auth
-  namespace: logging
+  namespace: admin
 spec:
   refreshInterval: "1h"
   secretStoreRef:
@@ -29,7 +29,7 @@ apiVersion: apisix.apache.org/v1alpha1
 kind: Consumer
 metadata:
   name: jaeger-user
-  namespace: logging
+  namespace: admin
 spec:
   gatewayRef:
     name: main-gateway
@@ -44,7 +44,7 @@ apiVersion: apisix.apache.org/v1alpha1
 kind: PluginConfig
 metadata:
   name: jaeger-basic-auth
-  namespace: logging
+  namespace: admin
 spec:
   plugins:
     - name: basic-auth
@@ -53,13 +53,13 @@ spec:
     - name: consumer-restriction
       config:
         type: consumer_name
-        whitelist: [logging_jaeger-user]
+        whitelist: [admin_jaeger-user]
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: jaeger-route
-  namespace: logging
+  namespace: admin
 spec:
   parentRefs:
     - group: gateway.networking.k8s.io

@@ -16,7 +16,7 @@ change goes through Git, a pull request and CI, and nothing has to be run by han
 Nodes:
 
 - `vps-master` (IONOS VPS): k3s server, public entry point (APISIX via ServiceLB).
-- `laptop-wsl` (old Windows laptop, WSL2): k3s agent, tainted `location=home:NoSchedule`, only runs workloads that tolerate it.
+- `apps-node` (old Windows laptop, WSL2): k3s agent, tainted `location=home:NoSchedule`, only runs workloads that tolerate it.
 - Node-to-node traffic (API, flannel VXLAN) goes over Tailscale (`tailscale0`).
 
 ## Decisions
@@ -58,6 +58,8 @@ Progress:
       root app of apps (`gitops/root.yaml`), Headlamp adopted (`gitops/apps/headlamp.yaml`).
 - [x] 2b — Headlamp on automated sync; Argo CD UI route + certificate; Argo CD manages itself.
 - [x] 2c — Observability: Loki, Promtail, Prometheus, Grafana, Jaeger (automated sync).
+- [ ] 2c+ — Headlamp and the observability stack moved to the `admin` namespace
+      (docs/runbooks/move-to-admin-namespace.md). Argo CD stays in `argocd`.
 - [ ] 2d — Security: cert-manager, External Secrets, Vault, Falco.
 - [ ] 2e — Gateway: APISIX, ingress controller, dashboard (admin key from Vault via ExternalSecret).
 - [ ] 2f — Applications: Postgres, auth, payment, front, pgadmin, Ollama.

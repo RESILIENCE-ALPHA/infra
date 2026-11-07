@@ -22,3 +22,10 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: headlamp
+---
+# Admin tools: observability stack (Loki, Promtail, Prometheus, Grafana, Jaeger) and Headlamp.
+# Argo CD keeps its own namespace (argocd).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: admin

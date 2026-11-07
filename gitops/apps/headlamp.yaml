@@ -26,8 +26,9 @@ spec:
         include: "{headlamp-admin.yaml,headlamp-httproute.yaml}"
   destination:
     server: https://kubernetes.default.svc
-    namespace: headlamp
+    namespace: admin
   syncPolicy:
     # Automated sync paused while moving to the admin namespace (docs/runbooks/move-to-admin-namespace.md).
     syncOptions:
       - ServerSideApply=true
+      - CreateNamespace=true

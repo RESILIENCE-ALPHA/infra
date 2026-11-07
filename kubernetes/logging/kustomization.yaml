@@ -1,8 +1,8 @@
-# Plain manifests for the logging namespace, synced by Argo CD (gitops/apps/logging.yaml).
+# Plain observability manifests (admin namespace), synced by Argo CD (gitops/apps/logging.yaml).
 # Helm values files in this folder are not listed here: the Helm apps read them directly.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-namespace: logging
+namespace: admin
 resources:
   - jaeger.yaml
   - jaeger-ui.yaml
