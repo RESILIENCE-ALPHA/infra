@@ -21,6 +21,8 @@ spec:
     server: https://kubernetes.default.svc
     namespace: logging
   syncPolicy:
-    # Manual first sync (review the diff), automated in the next PR, as for Headlamp.
+    automated:
+      prune: true
+      selfHeal: true
     syncOptions:
       - ServerSideApply=true
