@@ -1,12 +1,12 @@
 #!/bin/bash
 # scripts/deploy_infra.sh
 # Deploys the shared services: External Secrets, APISIX (gateway, ingress controller, dashboard),
-# cert-manager, Vault + Falco (security), Loki + Promtail + Prometheus + Jaeger + Grafana (logging), Ollama (ia),
+# cert-manager, Vault + Falco (security), Ollama (ia),
 # the EPSI Pay services and front, certificates and routes.
 # VAULT_TOKEN (write access to apps/apisix-admin) lets it read/store the APISIX admin key in Vault.
 # First dashboard install needs APISIX_DASHBOARD_PASSWORD and APISIX_DASHBOARD_SECRET in the environment.
 # Run from the repository root.
-# Being replaced by Argo CD (gitops/apps); Headlamp already moved there.
+# Being replaced by Argo CD (gitops/apps); Headlamp and the logging stack already moved there.
 
 set -euo pipefail
 
@@ -14,10 +14,8 @@ export KUBECONFIG=${KUBECONFIG:-/etc/rancher/k3s/k3s.yaml}
 echo "Using KUBECONFIG: $KUBECONFIG"
 
 echo "Updating Helm repositories..."
-helm repo add grafana https://grafana.github.io/helm-charts
 helm repo add hashicorp https://helm.releases.hashicorp.com
 helm repo add jetstack https://charts.jetstack.io
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo add external-secrets https://charts.external-secrets.io
 helm repo add apisix https://charts.apiseven.com
 helm repo add falcosecurity https://falcosecurity.github.io/charts
@@ -112,32 +110,8 @@ helm upgrade --install falco falcosecurity/falco \
     --namespace security --version 9.2.1 \
     -f kubernetes/security/falco-values.yaml
 
-echo "Deploying Loki..."
-helm upgrade --install loki grafana/loki \
-    --namespace logging \
-    -f kubernetes/logging/loki-values.yml
-
-echo "Deploying Promtail..."
-helm upgrade --install promtail grafana/promtail \
-    --namespace logging \
-    --set "config.clients[0].url=http://loki-gateway.logging.svc.cluster.local/loki/api/v1/push"
-
-echo "Deploying Prometheus..."
-helm upgrade --install prometheus prometheus-community/prometheus \
-    --namespace logging \
-    -f kubernetes/logging/prometheus-values.yml
-
-# Traces of the EPSI Pay requests (APISIX zipkin plugin + OpenTelemetry auto-instrumentation in auth/payment)
-echo "Deploying Jaeger..."
-kubectl apply -f kubernetes/logging/jaeger.yaml
-
 echo "Deploying Ollama..."
 kubectl apply -f kubernetes/ia/ollama.yaml
-
-echo "Deploying Grafana..."
-helm upgrade --install grafana grafana/grafana \
-    --namespace logging \
-    -f kubernetes/logging/grafana-values.yml
 
 
 echo "Applying Vault backend and HTTPRoutes..."
@@ -157,14 +131,8 @@ kubectl apply -f kubernetes/apisix/certificates.yaml
 kubectl apply -f kubernetes/apisix/gateway.yaml
 kubectl apply -f kubernetes/apisix/http-to-https-redirect.yaml   # global HTTP->HTTPS redirect (ACME challenge excluded)
 kubectl apply -f kubernetes/apisix/tracing.yaml   # global rule: zipkin spans of auth/payment/front API requests -> Jaeger
-kubectl apply -f kubernetes/logging/grafana-externalsecret.yaml
-kubectl -n logging create configmap grafana-dashboard-apisix-api-logs \
-    --from-file=apisix-api-logs.json=kubernetes/logging/dashboards/apisix-api-logs.json \
-    --dry-run=client -o yaml | kubectl label --local -f - grafana_dashboard=1 -o yaml | kubectl apply -f -
 kubectl apply -f kubernetes/apisix/referencegrant.yaml
 kubectl apply -f kubernetes/security/vault-httproute.yaml
-kubectl apply -f kubernetes/logging/grafana-httproute.yaml
-kubectl apply -f kubernetes/logging/jaeger-ui.yaml   # Jaeger UI route + basic auth (needs Vault apps/jaeger-basic-auth)
 kubectl apply -f kubernetes/apisix/apisix-dashboard-httproute.yaml
 
 echo "Certificate status (READY must turn True; DNS must point to the node):"

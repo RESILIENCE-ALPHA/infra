@@ -4,6 +4,8 @@ server:
   persistentVolume:
     enabled: true
     size: 10Gi
+    annotations:
+      argocd.argoproj.io/sync-options: Delete=false   # Argo CD never deletes the metrics
 alertmanager:
   enabled: false
 prometheus-pushgateway:

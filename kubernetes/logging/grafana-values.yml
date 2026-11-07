@@ -1,6 +1,8 @@
 persistence:
    enabled: true
    size: 10Gi
+   annotations:
+      argocd.argoproj.io/sync-options: Delete=false   # Argo CD never deletes Grafana's data
    
 admin:
    existingSecret: grafana-admin   # created out of band, not stored in git
@@ -29,7 +31,7 @@ datasources:
 initChownData:
   enabled: false
 
-# Dashboards are loaded from ConfigMaps labelled grafana_dashboard=1 (see deploy_infra.sh).
+# Dashboards are loaded from ConfigMaps labelled grafana_dashboard=1 (kubernetes/logging/kustomization.yaml).
 sidecar:
   dashboards:
     enabled: true

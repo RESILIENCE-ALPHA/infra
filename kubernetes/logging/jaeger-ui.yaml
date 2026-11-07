@@ -62,7 +62,9 @@ metadata:
   namespace: logging
 spec:
   parentRefs:
-    - name: main-gateway
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: main-gateway
       namespace: apisix
   hostnames:
     - jaeger.karim-portfolio.xyz
@@ -78,5 +80,8 @@ spec:
             kind: PluginConfig
             name: jaeger-basic-auth
       backendRefs:
-        - name: jaeger
+        - group: ""
+          kind: Service
+          name: jaeger
           port: 16686
+          weight: 1
