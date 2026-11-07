@@ -1,7 +1,8 @@
 ---
-# Installs Argo CD on the control plane and applies the root "app of apps"
+# Bootstraps Argo CD on the control plane and applies the root "app of apps"
 # (gitops/root.yaml). From then on, Argo CD deploys everything under gitops/apps from Git.
-# Safe to re-run: Helm upgrades Argo CD only when the version or values change.
+# After that, Argo CD manages itself (gitops/apps/argocd.yaml); re-running this is only
+# needed to rebuild a cluster. Safe to re-run: it changes nothing when Git and cluster agree.
 #
 #   cd ansible
 #   ansible-playbook playbooks/argocd.yml --check --diff
@@ -12,7 +13,9 @@
   become: true
   run_once: true
   vars:
-    argocd_chart_version: 10.10.5        # Argo CD v3.5.5
+    # Single source of truth for the version: the self-managed Application in gitops/apps.
+    argocd_app: "{{ lookup('ansible.builtin.file', playbook_dir + '/../../gitops/apps/argocd.yaml') | from_yaml }}"
+    argocd_chart_version: "{{ argocd_app.spec.sources[0].targetRevision }}"
     argocd_namespace: argocd
     argocd_kubeconfig: /etc/rancher/k3s/k3s.yaml
   tasks:

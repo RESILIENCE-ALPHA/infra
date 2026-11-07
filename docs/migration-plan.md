@@ -56,7 +56,7 @@ Progress:
 
 - [x] 2a — Argo CD bootstrap (`ansible/playbooks/argocd.yml`, values in `gitops/argocd/values.yaml`),
       root app of apps (`gitops/root.yaml`), Headlamp adopted (`gitops/apps/headlamp.yaml`).
-- [ ] 2b — Headlamp on automated sync; Argo CD UI route + certificate; Argo CD manages itself.
+- [x] 2b — Headlamp on automated sync; Argo CD UI route + certificate; Argo CD manages itself.
 - [ ] 2c — Observability: Loki, Promtail, Prometheus, Grafana, Jaeger.
 - [ ] 2d — Security: cert-manager, External Secrets, Vault, Falco.
 - [ ] 2e — Gateway: APISIX, ingress controller, dashboard (admin key from Vault via ExternalSecret).

@@ -1,0 +1,32 @@
+# Argo CD manages itself. Upgrade Argo CD by changing targetRevision below (and nothing else):
+# ansible/playbooks/argocd.yml reads the same version for the initial bootstrap.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd
+  namespace: argocd
+spec:
+  project: default
+  sources:
+    - repoURL: https://argoproj.github.io/argo-helm
+      chart: argo-cd
+      targetRevision: 10.10.5        # Argo CD v3.5.5
+      helm:
+        releaseName: argocd
+        valueFiles:
+          - $values/gitops/argocd/values.yaml
+    - repoURL: https://github.com/RESILIENCE-ALPHA/infra.git
+      targetRevision: main
+      ref: values
+    - repoURL: https://github.com/RESILIENCE-ALPHA/infra.git
+      targetRevision: main
+      path: kubernetes/argocd
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: false     # never let a Git mistake delete Argo CD's own components
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true   # Argo CD's CRDs are too large for client-side apply annotations

@@ -28,7 +28,8 @@ spec:
     server: https://kubernetes.default.svc
     namespace: headlamp
   syncPolicy:
-    # No `automated` yet: the first sync is done by hand after reviewing the diff.
-    # Next PR turns on automated sync with prune + selfHeal.
+    automated:
+      prune: true
+      selfHeal: true
     syncOptions:
       - ServerSideApply=true

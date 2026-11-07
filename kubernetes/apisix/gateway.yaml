@@ -122,3 +122,15 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
+
+    - name: https-argocd
+      port: 443
+      protocol: HTTPS
+      hostname: argocd.karim-portfolio.xyz
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: argocd-tls
+      allowedRoutes:
+        namespaces:
+          from: All
