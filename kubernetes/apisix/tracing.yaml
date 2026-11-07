@@ -18,7 +18,7 @@ spec:
     - name: zipkin
       enable: true
       config:
-        endpoint: http://jaeger.logging.svc.cluster.local:9411/api/v2/spans
+        endpoint: http://jaeger.admin.svc.cluster.local:9411/api/v2/spans
         sample_ratio: 1
         service_name: apisix
         _meta:

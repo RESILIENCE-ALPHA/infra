@@ -3,12 +3,12 @@
 # auto-instrumentation, see auth.yaml / payment.yaml) and Zipkin (9411) from the APISIX `zipkin`
 # plugin (kubernetes/apisix/tracing.yaml). Traces are stored in Badger on a PVC, kept 72h.
 # No public route: read traces in Grafana (Jaeger datasource) or
-# `kubectl -n logging port-forward svc/jaeger 16686` then http://localhost:16686.
+# `kubectl -n admin port-forward svc/jaeger 16686` then http://localhost:16686.
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: jaeger-config
-  namespace: logging
+  namespace: admin
 data:
   config.yaml: |
     service:
@@ -66,7 +66,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: jaeger-data
-  namespace: logging
+  namespace: admin
   annotations:
     argocd.argoproj.io/sync-options: Delete=false   # Argo CD never deletes the trace data
 spec:
@@ -80,7 +80,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: jaeger
-  namespace: logging
+  namespace: admin
   labels:
     app: jaeger
 spec:
@@ -133,7 +133,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: jaeger
-  namespace: logging
+  namespace: admin
 spec:
   type: ClusterIP
   selector:

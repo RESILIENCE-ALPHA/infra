@@ -1,4 +1,4 @@
-# Plain manifests of the logging namespace (kubernetes/logging/kustomization.yaml):
+# Plain observability manifests in the admin namespace (kubernetes/logging/kustomization.yaml):
 # Jaeger, Jaeger UI route + basic auth, Grafana route, Grafana admin ExternalSecret,
 # Grafana dashboards (ConfigMaps generated from kubernetes/logging/dashboards/).
 apiVersion: argoproj.io/v1alpha1
@@ -14,8 +14,9 @@ spec:
     path: kubernetes/logging
   destination:
     server: https://kubernetes.default.svc
-    namespace: logging
+    namespace: admin
   syncPolicy:
     # Automated sync paused while moving to the admin namespace (docs/runbooks/move-to-admin-namespace.md).
     syncOptions:
       - ServerSideApply=true
+      - CreateNamespace=true

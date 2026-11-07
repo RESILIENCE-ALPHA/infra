@@ -23,6 +23,9 @@ spec:
     - group: gateway.networking.k8s.io
       kind: HTTPRoute
       namespace: argocd
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      namespace: admin
   to:
     - group: ""
       kind: Service

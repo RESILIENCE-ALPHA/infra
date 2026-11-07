@@ -18,15 +18,15 @@ datasources:
     datasources:
       - name: Prometheus
         type: prometheus
-        url: http://prometheus-server.logging.svc.cluster.local
+        url: http://prometheus-server.admin.svc.cluster.local
         isDefault: true
       - name: Loki
         type: loki
-        url: http://loki-gateway.logging.svc.cluster.local
+        url: http://loki-gateway.admin.svc.cluster.local
       - name: Jaeger
         type: jaeger
         uid: jaeger
-        url: http://jaeger.logging.svc.cluster.local:16686
+        url: http://jaeger.admin.svc.cluster.local:16686
 
 initChownData:
   enabled: false

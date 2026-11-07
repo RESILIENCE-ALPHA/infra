@@ -1,4 +1,4 @@
-# Supervision (Prometheus) - namespace: logging
+# Supervision (Prometheus) - namespace: admin
 server:
   retention: 15d
   persistentVolume:
