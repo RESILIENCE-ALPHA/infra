@@ -5,7 +5,7 @@ server:
     enabled: true
     size: 10Gi
     annotations:
-      argocd.argoproj.io/sync-options: Delete=false   # Argo CD never deletes the metrics
+      argocd.argoproj.io/sync-options: Prune=false,Delete=false   # Argo CD never prunes or deletes the metrics
 alertmanager:
   enabled: false
 prometheus-pushgateway:

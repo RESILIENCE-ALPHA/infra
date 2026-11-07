@@ -2,7 +2,7 @@ persistence:
    enabled: true
    size: 10Gi
    annotations:
-      argocd.argoproj.io/sync-options: Delete=false   # Argo CD never deletes Grafana's data
+      argocd.argoproj.io/sync-options: Prune=false,Delete=false   # Argo CD never prunes or deletes Grafana's data
    
 admin:
    existingSecret: grafana-admin   # created out of band, not stored in git

@@ -68,7 +68,7 @@ metadata:
   name: jaeger-data
   namespace: admin
   annotations:
-    argocd.argoproj.io/sync-options: Delete=false   # Argo CD never deletes the trace data
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false   # Argo CD never prunes or deletes the trace data
 spec:
   accessModes: [ReadWriteOnce]
   storageClassName: local-path
