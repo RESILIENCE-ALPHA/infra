@@ -131,7 +131,11 @@ kubectl delete namespace external-secrets cert-manager
 kubectl get crd | grep -E 'external-secrets|cert-manager' | wc -l     # CRDs still there
 ```
 
-## 7. Follow-up PR
+## 7. Follow-up
 
-Automated sync for the five apps, the Vault Helm release record removed
-(`kubectl -n security delete secret -l owner=helm,name=vault`).
+Automated sync for the five apps (done), then remove the Vault Helm release record:
+
+```bash
+kubectl -n security delete secret -l owner=helm,name=vault
+helm list -A      # only argocd and the apisix releases left
+```

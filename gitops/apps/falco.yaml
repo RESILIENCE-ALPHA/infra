@@ -24,7 +24,9 @@ spec:
     server: https://kubernetes.default.svc
     namespace: security-apps
   syncPolicy:
-    # Manual first sync (review the diff), automated in a follow-up PR.
+    automated:
+      prune: true
+      selfHeal: true
     syncOptions:
       - ServerSideApply=true
       - CreateNamespace=true
