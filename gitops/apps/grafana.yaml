@@ -21,15 +21,6 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: admin
-  # The claim is bound to a pre-existing volume (moved from the logging namespace), so it
-  # carries volumeName/storageClassName that the chart does not render. Keep the live values
-  # instead of trying to clear them (a bound claim's spec is immutable).
-  ignoreDifferences:
-    - group: ""
-      kind: PersistentVolumeClaim
-      jsonPointers:
-        - /spec/volumeName
-        - /spec/storageClassName
   syncPolicy:
     automated:
       prune: true
@@ -37,4 +28,3 @@ spec:
     syncOptions:
       - ServerSideApply=true
       - CreateNamespace=true
-      - RespectIgnoreDifferences=true

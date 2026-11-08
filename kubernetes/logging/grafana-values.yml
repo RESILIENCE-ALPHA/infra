@@ -3,6 +3,10 @@ persistence:
    size: 10Gi
    annotations:
       argocd.argoproj.io/sync-options: Prune=false,Delete=false   # Argo CD never prunes or deletes Grafana's data
+   # Bound to the existing volume (kept when moving from the logging namespace). Declared here so
+   # the rendered claim matches the live one: a bound claim's spec is immutable.
+   storageClassName: local-path
+   volumeName: pvc-b941e868-7320-4953-a033-f0aaf7330dda
    
 admin:
    existingSecret: grafana-admin   # created out of band, not stored in git
