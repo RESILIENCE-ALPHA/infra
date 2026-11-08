@@ -10,16 +10,10 @@ spec:
       namespace: applications
     - group: gateway.networking.k8s.io
       kind: HTTPRoute
-      namespace: logging
-    - group: gateway.networking.k8s.io
-      kind: HTTPRoute
       namespace: security
     - group: gateway.networking.k8s.io
       kind: HTTPRoute
       namespace: ia
-    - group: gateway.networking.k8s.io
-      kind: HTTPRoute
-      namespace: headlamp
     - group: gateway.networking.k8s.io
       kind: HTTPRoute
       namespace: argocd

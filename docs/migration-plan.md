@@ -58,8 +58,9 @@ Progress:
       root app of apps (`gitops/root.yaml`), Headlamp adopted (`gitops/apps/headlamp.yaml`).
 - [x] 2b — Headlamp on automated sync; Argo CD UI route + certificate; Argo CD manages itself.
 - [x] 2c — Observability: Loki, Promtail, Prometheus, Grafana, Jaeger (automated sync).
-- [ ] 2c+ — Headlamp and the observability stack moved to the `admin` namespace
+- [x] 2c+ — Headlamp and the observability stack moved to the `admin` namespace
       (docs/runbooks/move-to-admin-namespace.md). Argo CD stays in `argocd`.
+      Jaeger traces from before the move were lost (PVC pruned before Prune=false existed).
 - [ ] 2d — Security: cert-manager, External Secrets, Vault, Falco.
 - [ ] 2e — Gateway: APISIX, ingress controller, dashboard (admin key from Vault via ExternalSecret).
 - [ ] 2f — Applications: Postgres, auth, payment, front, pgadmin, Ollama.

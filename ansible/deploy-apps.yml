@@ -10,7 +10,6 @@
       - epsi_pay
     namespaces:
       - applications
-      - logging
       - admin
       - security
       - ia

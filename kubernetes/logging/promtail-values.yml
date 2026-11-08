@@ -1,4 +1,16 @@
 # Promtail (chart grafana/promtail 6.17.1): ships pod logs to Loki.
+# Run on every node, apps-node included (tainted location=home): its pod logs go to Loki too.
+tolerations:
+  - key: node-role.kubernetes.io/master
+    operator: Exists
+    effect: NoSchedule
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule
+  - key: location
+    operator: Equal
+    value: home
+    effect: NoSchedule
 config:
   clients:
     - url: http://loki-gateway.admin.svc.cluster.local/loki/api/v1/push

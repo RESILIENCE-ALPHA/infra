@@ -31,7 +31,9 @@ spec:
         - /spec/volumeName
         - /spec/storageClassName
   syncPolicy:
-    # Automated sync paused while moving to the admin namespace (docs/runbooks/move-to-admin-namespace.md).
+    automated:
+      prune: true
+      selfHeal: true
     syncOptions:
       - ServerSideApply=true
       - CreateNamespace=true
