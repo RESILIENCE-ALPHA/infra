@@ -17,6 +17,10 @@ Downtime: Grafana, Prometheus, Loki and Jaeger are stopped from step 3 to step 6
 
 Run every command from the dev container (`kubectl` pointing at the cluster).
 
+> Lesson from the first run: `Delete=false` only protects a resource when its whole app is
+> deleted. Pruning (a resource removed from Git, or moved to another namespace) needs
+> `Prune=false`. Data volumes carry both, and step 2 (Retain) must run before any sync.
+
 ## 1. Pause automated sync (PR 1)
 
 Merge the PR that removes `automated` from the six apps, then check:
@@ -78,7 +82,7 @@ metadata:
   name: $c
   namespace: admin
   annotations:
-    argocd.argoproj.io/sync-options: Delete=false
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false
 spec:
   accessModes: [ReadWriteOnce]
   storageClassName: local-path

@@ -22,7 +22,9 @@ spec:
     server: https://kubernetes.default.svc
     namespace: admin
   syncPolicy:
-    # Automated sync paused while moving to the admin namespace (docs/runbooks/move-to-admin-namespace.md).
+    automated:
+      prune: true
+      selfHeal: true
     syncOptions:
       - ServerSideApply=true
       - CreateNamespace=true
