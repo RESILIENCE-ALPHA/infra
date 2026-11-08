@@ -1,0 +1,23 @@
+# Security platform manifests (kubernetes/security/kustomization.yaml): Let's Encrypt
+# ClusterIssuers, the Vault ClusterSecretStore, the Vault UI route.
+# Wave -1: after cert-manager, External Secrets and Vault; before anything using ExternalSecrets.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: security
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/RESILIENCE-ALPHA/infra.git
+    targetRevision: main
+    path: kubernetes/security
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: security
+  syncPolicy:
+    # Manual first sync (review the diff), automated in a follow-up PR.
+    syncOptions:
+      - ServerSideApply=true

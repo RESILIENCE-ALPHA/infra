@@ -1,0 +1,10 @@
+# Vault (chart hashicorp/vault 0.34.1), namespace security.
+# Persistent file storage: dev mode would wipe every secret on restart.
+# A new Vault comes up sealed and uninitialised: `vault operator init` once, then unseal x3.
+server:
+  dev:
+    enabled: false
+  dataStorage:
+    enabled: true
+    size: 1Gi
+    storageClass: local-path

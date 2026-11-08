@@ -11,5 +11,5 @@ spec:
       auth:
         tokenSecretRef:
           name: vault-token
-          namespace: external-secrets
+          namespace: security
           key: token
