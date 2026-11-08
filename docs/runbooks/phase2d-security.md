@@ -81,7 +81,7 @@ sync_app cert-manager
 kubectl -n security get pods -l app.kubernetes.io/instance=cert-manager
 
 # Issuers, secret store (now reading security/vault-token), Vault UI route
-sync_app security
+sync_app security-config
 kubectl get clusterissuer                     # READY True
 kubectl get clustersecretstore vault-backend  # READY True
 ```

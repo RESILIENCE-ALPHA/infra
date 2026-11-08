@@ -4,7 +4,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: security
+  name: security-config   # not "security": the namespace has that name, and the app holds only config
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
