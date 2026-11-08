@@ -12,6 +12,7 @@
       - applications
       - admin
       - security
+      - security-apps
       - ia
 
   tasks:

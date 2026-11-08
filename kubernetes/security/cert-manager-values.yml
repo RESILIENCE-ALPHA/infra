@@ -1,4 +1,4 @@
-# cert-manager (namespace: cert-manager) - issues Let's Encrypt certificates
+# cert-manager (chart jetstack/cert-manager v1.18.2, namespace security) - issues Let's Encrypt certificates
 crds:
   enabled: true
 config:

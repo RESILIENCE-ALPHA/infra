@@ -1,0 +1,31 @@
+# cert-manager (namespace security): Let's Encrypt certificates for the gateway listeners.
+# Its ACME account keys live in this namespace (cluster resource namespace). Installs its CRDs.
+# Wave -3: CRDs must exist before the ClusterIssuers and Certificates.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cert-manager
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-3"
+spec:
+  project: default
+  sources:
+    - repoURL: https://charts.jetstack.io
+      chart: cert-manager
+      targetRevision: v1.18.2
+      helm:
+        releaseName: cert-manager
+        valueFiles:
+          - $values/kubernetes/security/cert-manager-values.yml
+    - repoURL: https://github.com/RESILIENCE-ALPHA/infra.git
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: security
+  syncPolicy:
+    # Manual first sync (review the diff), automated in a follow-up PR.
+    syncOptions:
+      - ServerSideApply=true
+      - CreateNamespace=true

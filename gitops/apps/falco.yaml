@@ -1,0 +1,30 @@
+# Falco (runtime security, DaemonSet) + falcosidekick -> service-ia (ia namespace).
+# Own namespace (security-apps): a privileged agent, kept apart from the secrets platform.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: falco
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: default
+  sources:
+    - repoURL: https://falcosecurity.github.io/charts
+      chart: falco
+      targetRevision: 9.2.1
+      helm:
+        releaseName: falco
+        valueFiles:
+          - $values/kubernetes/security/falco-values.yaml
+    - repoURL: https://github.com/RESILIENCE-ALPHA/infra.git
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: security-apps
+  syncPolicy:
+    # Manual first sync (review the diff), automated in a follow-up PR.
+    syncOptions:
+      - ServerSideApply=true
+      - CreateNamespace=true

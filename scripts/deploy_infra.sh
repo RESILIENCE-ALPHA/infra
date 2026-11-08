@@ -1,12 +1,12 @@
 #!/bin/bash
 # scripts/deploy_infra.sh
-# Deploys the shared services: External Secrets, APISIX (gateway, ingress controller, dashboard),
-# cert-manager, Vault + Falco (security), Ollama (ia),
+# Deploys the shared services: APISIX (gateway, ingress controller, dashboard),
+# Ollama (ia),
 # the EPSI Pay services and front, certificates and routes.
 # VAULT_TOKEN (write access to apps/apisix-admin) lets it read/store the APISIX admin key in Vault.
 # First dashboard install needs APISIX_DASHBOARD_PASSWORD and APISIX_DASHBOARD_SECRET in the environment.
 # Run from the repository root.
-# Being replaced by Argo CD (gitops/apps); Headlamp and the logging stack already moved there.
+# Being replaced by Argo CD (gitops/apps); Headlamp, observability and security already moved there.
 
 set -euo pipefail
 
@@ -14,31 +14,11 @@ export KUBECONFIG=${KUBECONFIG:-/etc/rancher/k3s/k3s.yaml}
 echo "Using KUBECONFIG: $KUBECONFIG"
 
 echo "Updating Helm repositories..."
-helm repo add hashicorp https://helm.releases.hashicorp.com
-helm repo add jetstack https://charts.jetstack.io
-helm repo add external-secrets https://charts.external-secrets.io
 helm repo add apisix https://charts.apiseven.com
-helm repo add falcosecurity https://falcosecurity.github.io/charts
 helm repo update
 
 echo "Creating namespaces (applications, logging, security, ia, headlamp)..."
 kubectl apply -f kubernetes/namespaces.yaml
-
-# Persistent file-backed storage: dev mode wipes secrets on every restart.
-# Vault comes up sealed/uninitialised: `vault operator init` once, then unseal x3.
-echo "Deploying Vault..."
-helm upgrade --install vault hashicorp/vault \
-    --namespace security \
-    --set server.dev.enabled=false \
-    --set server.dataStorage.enabled=true \
-    --set server.dataStorage.size=1Gi \
-    --set server.dataStorage.storageClass=local-path
-
-echo "Deploying External Secrets Operator..."
-helm upgrade --install external-secrets external-secrets/external-secrets \
-    --namespace external-secrets --create-namespace --version 2.4.1 \
-    --set installCRDs=true
-kubectl -n external-secrets rollout status deploy/external-secrets-webhook --timeout=180s
 
 # APISIX admin key, source of truth = Vault (apps/apisix-admin, field `key`). Resolved in order:
 # $APISIX_ADMIN_KEY, Vault (needs $VAULT_TOKEN and an unsealed vault-0), the running ingress
@@ -97,25 +77,10 @@ else
 fi
 kubectl apply -f kubernetes/apisix/gatewayclass.yaml
 
-echo "Deploying cert-manager..."
-helm upgrade --install cert-manager jetstack/cert-manager \
-    --namespace cert-manager --create-namespace --version v1.18.2 \
-    -f kubernetes/security/cert-manager-values.yml
-kubectl -n cert-manager rollout status deploy/cert-manager-webhook --timeout=180s
-kubectl apply -f kubernetes/security/clusterissuers.yaml
-
-# Runtime security alerts -> falcosidekick -> service-ia (ia namespace)
-echo "Deploying Falco..."
-helm upgrade --install falco falcosecurity/falco \
-    --namespace security --version 9.2.1 \
-    -f kubernetes/security/falco-values.yaml
-
 echo "Deploying Ollama..."
 kubectl apply -f kubernetes/ia/ollama.yaml
 
 
-echo "Applying Vault backend and HTTPRoutes..."
-kubectl apply -f kubernetes/security/vault-backend.yaml
 # GHCR pull secret (template rendered for the applications namespace; needs Vault unsealed)
 sed -e 's/{{ namespace }}/applications/g' \
     -e "s/{{ '{{' }}/{{/g" -e "s/{{ '}}' }}/}}/g" \
@@ -132,7 +97,6 @@ kubectl apply -f kubernetes/apisix/gateway.yaml
 kubectl apply -f kubernetes/apisix/http-to-https-redirect.yaml   # global HTTP->HTTPS redirect (ACME challenge excluded)
 kubectl apply -f kubernetes/apisix/tracing.yaml   # global rule: zipkin spans of auth/payment/front API requests -> Jaeger
 kubectl apply -f kubernetes/apisix/referencegrant.yaml
-kubectl apply -f kubernetes/security/vault-httproute.yaml
 kubectl apply -f kubernetes/apisix/apisix-dashboard-httproute.yaml
 
 echo "Certificate status (READY must turn True; DNS must point to the node):"

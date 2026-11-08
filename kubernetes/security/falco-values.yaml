@@ -1,4 +1,4 @@
-# Falco (chart falcosecurity/falco 9.2.1), installed by deploy_infra.sh.
+# Falco (chart falcosecurity/falco 9.2.1), synced by Argo CD (gitops/apps/falco.yaml).
 # Alerts go through falcosidekick to service-ia (ia namespace) for remediation.
 driver:
   type: modern_ebpf
@@ -12,15 +12,16 @@ resources:
 
 customRules:
   custom-rules.yaml: |
-    # Only OUTBOUND connections, and never Falco's own traffic: falco -> falcosidekick and
-    # falcosidekick -> service-ia are connections in this namespace, so matching them makes every
-    # alert trigger another alert (that loop OOM-killed Falco). Vault's inbound traffic (ESO, UI)
-    # is not matched either.
+    # Watches the secrets platform (namespace security: Vault, External Secrets, cert-manager).
+    # Only OUTBOUND connections from processes that are not expected there. Falco itself runs in
+    # security-apps, so its own traffic never matches (an alert loop OOM-killed Falco in October).
+    # Expected: Vault; External Secrets -> Vault + API server; cert-manager (controller,
+    # cainjector, webhook, startupapicheck hook) -> API server + Let's Encrypt.
     - rule: Unexpected Outbound Connection In Security Namespace
       desc: Outbound network connection from an unexpected process in the security namespace
       condition: >
         outbound and k8s.ns.name = "security"
-        and not proc.name in (falco, falcosidekick, vault, vault-k8s)
+        and not proc.name in (vault, vault-k8s, external-secrets, controller, cainjector, webhook, startupapicheck)
       output: "Outbound connection in security namespace (user=%user.name command=%proc.cmdline connection=%fd.name pod=%k8s.pod.name)"
       priority: NOTICE
       tags: [network, k8s]

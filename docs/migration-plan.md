@@ -61,7 +61,9 @@ Progress:
 - [x] 2c+ — Headlamp and the observability stack moved to the `admin` namespace
       (docs/runbooks/move-to-admin-namespace.md). Argo CD stays in `argocd`.
       Jaeger traces from before the move were lost (PVC pruned before Prune=false existed).
-- [ ] 2d — Security: cert-manager, External Secrets, Vault, Falco.
+- [x] 2d — Security: cert-manager, External Secrets, Vault, Falco (sync waves -3/-2/-1/0).
+      Namespace security = Vault, External Secrets, cert-manager, ClusterIssuers;
+      Falco in security-apps (docs/runbooks/phase2d-security.md).
 - [ ] 2e — Gateway: APISIX, ingress controller, dashboard (admin key from Vault via ExternalSecret).
 - [ ] 2f — Applications: Postgres, auth, payment, front, pgadmin, Ollama.
 - [ ] 2g — Delete `scripts/deploy_infra.sh`, `null_resource.deploy_infra`, `null_resource.deploy_apps`.
