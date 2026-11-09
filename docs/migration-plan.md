@@ -66,7 +66,8 @@ Progress:
       Falco in security-apps (docs/runbooks/phase2d-security.md).
 - [x] 2e — Gateway: APISIX, ingress controller, Gateway config (admin + viewer keys from Vault via
       ExternalSecret). Old apisix-dashboard retired: built-in UI at admin API /ui/ (port-forward).
-- [ ] 2f — Applications: Postgres, auth, payment, front, pgadmin, Ollama.
+- [x] 2f — Applications: Postgres (rendered from the Ansible template), auth, payment, front,
+      pgAdmin, Ollama, GHCR pull secret as a plain ExternalSecret (docs/runbooks/phase2f-apps.md).
 - [ ] 2g — Delete `scripts/deploy_infra.sh`, `null_resource.deploy_infra`, `null_resource.deploy_apps`.
 
 

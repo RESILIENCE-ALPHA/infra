@@ -1,5 +1,7 @@
-# One-shot seed of the shared Postgres server. Runs to completion, then the pod stays in Completed state.
-# Re-running: kubectl -n applications delete job epsi-pay-database-seed && kubectl apply -f this file.
+# One-shot seed of the shared Postgres server. Runs to completion, then stays Completed; Argo CD does
+# not run it again while its spec is unchanged (a Job's spec is immutable).
+# Re-running on purpose: kubectl -n applications delete job epsi-pay-database-seed, then sync the
+# epsi-pay app (Argo CD recreates it). Never delete it otherwise.
 # Same database and credentials as the services: one shared Postgres database (postgres-epsi-pay-credentials).
 # The auth and payment Deployments wait for this Job through an init container, which needs read access to Jobs.
 apiVersion: v1

@@ -1,0 +1,22 @@
+# Ollama (LLM server for service-ia), 20Gi models PVC. service-ia and its secrets are deployed
+# from their own repository, not from here.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ollama
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/RESILIENCE-ALPHA/infra.git
+    targetRevision: main
+    path: kubernetes/ia
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ia
+  syncPolicy:
+    # Manual first sync (review the diff), automated in a follow-up PR.
+    syncOptions:
+      - ServerSideApply=true

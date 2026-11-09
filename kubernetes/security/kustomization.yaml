@@ -1,6 +1,5 @@
 # Security plain manifests, synced by Argo CD (gitops/apps/security-config.yaml).
 # Not listed (not deployed): modsecurity*.yaml, waf-pluginconfig.yaml, api-waf-ratelimit-pluginconfig.yaml.
-# ghcr-auth.yaml is a per-namespace template, deployed with the applications.
 # Bootstrap secret kept out of Git: security/vault-token (Vault token used by the store).
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
