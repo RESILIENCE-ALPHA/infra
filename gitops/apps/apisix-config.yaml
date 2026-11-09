@@ -18,6 +18,8 @@ spec:
     server: https://kubernetes.default.svc
     namespace: apisix
   syncPolicy:
-    # Manual first sync (review the diff), automated in a follow-up PR.
+    automated:
+      prune: true
+      selfHeal: true
     syncOptions:
       - ServerSideApply=true
