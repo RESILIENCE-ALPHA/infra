@@ -16,6 +16,9 @@ spec:
   destination:
     server: https://kubernetes.default.svc
   syncPolicy:
-    # Manual first sync (review the diff), automated in a follow-up PR.
+    automated:
+      # never prune CRDs (deleting one deletes every object of its type)
+      prune: false
+      selfHeal: true
     syncOptions:
       - ServerSideApply=true
