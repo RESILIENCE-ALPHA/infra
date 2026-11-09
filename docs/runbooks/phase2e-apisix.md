@@ -47,11 +47,20 @@ The second command must list `"key":` and `"viewer":` (names only, no values).
 ```bash
 kubectl -n argocd annotate application root argocd.argoproj.io/refresh=hard --overwrite
 sleep 30
-kubectl -n argocd get applications apisix apisix-ingress-controller apisix-config
+kubectl -n argocd get applications apisix-crds apisix apisix-ingress-controller apisix-config
 ```
 
-All three `OutOfSync`. Review each App Diff: nothing deleted except, in
+`apisix-crds`, `apisix`, `apisix-ingress-controller`, `apisix-config` all `OutOfSync`. Review each App Diff: nothing deleted except, in
 `apisix-ingress-controller`, the webhook configuration and its Secret.
+
+## 1b. Sync `apisix-crds`
+
+APISIX's own CRDs (already installed, adopted in place; never pruned or deleted):
+
+```bash
+sync_app apisix-crds
+kubectl get crd | grep -c apisix.apache.org        # 11
+```
 
 ## 2. Sync `apisix`
 
