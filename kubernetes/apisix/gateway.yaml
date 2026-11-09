@@ -51,18 +51,6 @@ spec:
         namespaces:
           from: All
 
-    - name: https-apisix-dashboard
-      port: 443
-      protocol: HTTPS
-      hostname: apisix-dashboard.karim-portfolio.xyz
-      tls:
-        mode: Terminate
-        certificateRefs:
-          - name: apisix-dashboard-tls
-      allowedRoutes:
-        namespaces:
-          from: All
-
     - name: https-auth
       port: 443
       protocol: HTTPS

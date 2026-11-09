@@ -1,0 +1,23 @@
+# Gateway configuration (kubernetes/apisix/kustomization.yaml): GatewayClass, the main Gateway
+# and its listeners, their Let's Encrypt certificates, the global HTTP->HTTPS redirect and
+# tracing rules, the ReferenceGrant. Wave 1: after APISIX and its controller.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: apisix-config
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/RESILIENCE-ALPHA/infra.git
+    targetRevision: main
+    path: kubernetes/apisix
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: apisix
+  syncPolicy:
+    # Manual first sync (review the diff), automated in a follow-up PR.
+    syncOptions:
+      - ServerSideApply=true

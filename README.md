@@ -4,7 +4,7 @@ k3s cluster (control plane on the VPS, worker nodes joined over Tailscale) with 
 
 ```
 main.tf, providers.tf, variables.tf   Terraform: installs k3s (scripts/install_k3s.sh)
-scripts/deploy_infra.sh               Helm: Vault, Loki, Promtail, Prometheus, Grafana; Ollama; HTTPRoutes
+scripts/deploy_infra.sh               Ollama and EPSI Pay (the rest is under Argo CD, gitops/apps)
 ansible/playbooks/k3s.yml             k3s cluster: Tailscale, control plane, agents (roles in ansible/roles)
 ansible/playbooks/argocd.yml          Argo CD + root app of apps (gitops/root.yaml)
 gitops/apps/                          One Argo CD Application per component (GitOps)
@@ -30,6 +30,6 @@ terraform init && terraform apply   # k3s, then Ansible (namespaces + Postgres),
 `terraform apply` runs the three layers in order. To run one by hand:
 ```bash
 ansible-playbook -i ansible/inventory.ini ansible/deploy-apps.yml   # namespaces + Postgres
-bash scripts/deploy_infra.sh                                   # Vault, Loki, Grafana, EPSI Pay, routes
+bash scripts/deploy_infra.sh                                   # Ollama, EPSI Pay
 ```
 Vault must be initialised once: `kubectl -n security exec vault-0 -- vault operator init` (store the keys safely, then `vault operator unseal` x3).

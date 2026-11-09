@@ -1,6 +1,5 @@
-# APISIX ingress controller (Helm release `apisix-ingress-controller`, chart 1.2.1).
-# The admin key is NOT stored here: deploy_infra.sh passes it with --set (config.apisix.adminKey
-# and gatewayProxy.provider.controlPlane.auth.adminKey.value).
+# APISIX ingress controller (chart apisix-ingress-controller 1.2.1), synced by Argo CD
+# (gitops/apps/apisix-ingress-controller.yaml).
 config:
   # The chart default "auto" adds `server_port in [80,443]` (the Gateway listener ports) to every
   # route, but APISIX listens on 9080/9443 behind its Service: nothing matches, every host 404s.
@@ -10,6 +9,11 @@ config:
   kubernetes:
     enableGatewayAPI: true
     watchNamespaces: '[]'
+# Admission webhook off: its certificate is generated at render time (genCA + lookup), which
+# under Argo CD means a new CA on every sync. It was failurePolicy Ignore, so it never blocked
+# anything; invalid resources still show in their status and the controller logs.
+webhook:
+  enabled: false
 gatewayProxy:
   createDefault: true
   provider:
@@ -17,4 +21,11 @@ gatewayProxy:
     controlPlane:
       endpoints:
         - http://apisix-admin.apisix.svc.cluster.local:9180
+      auth:
+        type: AdminKey
+        adminKey:
+          valueFrom:
+            secretKeyRef:
+              name: apisix-admin-credentials   # from Vault, see kubernetes/apisix/admin-credentials
+              key: admin
 ingressClass: apisix

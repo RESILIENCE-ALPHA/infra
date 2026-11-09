@@ -1,0 +1,29 @@
+# APISIX ingress controller (Gateway API -> APISIX). Adopts the release from deploy_infra.sh.
+# Admin key read from Secret apisix-admin-credentials (apisix app).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: apisix-ingress-controller
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: default
+  sources:
+    - repoURL: https://charts.apiseven.com
+      chart: apisix-ingress-controller
+      targetRevision: 1.2.1
+      helm:
+        releaseName: apisix-ingress-controller
+        valueFiles:
+          - $values/kubernetes/apisix/apisix-ingress-controller-values.yaml
+    - repoURL: https://github.com/RESILIENCE-ALPHA/infra.git
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: apisix
+  syncPolicy:
+    # Manual first sync (review the diff), automated in a follow-up PR.
+    syncOptions:
+      - ServerSideApply=true
