@@ -15,6 +15,8 @@ spec:
       targetRevision: 1.2.1
       helm:
         releaseName: apisix-ingress-controller
+        # CRDs come from the apisix-crds app; the chart's Gateway API CRDs are older than the cluster's.
+        skipCrds: true
         valueFiles:
           - $values/kubernetes/apisix/apisix-ingress-controller-values.yaml
     - repoURL: https://github.com/RESILIENCE-ALPHA/infra.git

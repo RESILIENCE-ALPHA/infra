@@ -1,0 +1,11 @@
+# APISIX ingress controller CRDs (apisix.apache.org), copied from chart
+# apisix-ingress-controller 1.2.1 (crds/apisixic-crds.yaml). Update together with the chart.
+# The chart's other CRD file (Gateway API) is deliberately NOT applied: the cluster runs a newer
+# Gateway API than the copy in the chart, and applying it would downgrade it cluster-wide.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - apisixic-crds.yaml
+commonAnnotations:
+  # Deleting a CRD deletes every object of that type: Argo CD never prunes or deletes these.
+  argocd.argoproj.io/sync-options: Prune=false,Delete=false

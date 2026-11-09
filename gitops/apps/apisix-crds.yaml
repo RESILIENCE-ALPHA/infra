@@ -1,0 +1,21 @@
+# CRDs of the APISIX ingress controller (apisix.apache.org), kept out of the chart app so the
+# chart's outdated Gateway API CRDs are never applied. Wave -1: before APISIX and its controller.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: apisix-crds
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/RESILIENCE-ALPHA/infra.git
+    targetRevision: main
+    path: kubernetes/apisix/crds
+  destination:
+    server: https://kubernetes.default.svc
+  syncPolicy:
+    # Manual first sync (review the diff), automated in a follow-up PR.
+    syncOptions:
+      - ServerSideApply=true
