@@ -1,0 +1,33 @@
+# APISIX gateway (data plane + bundled etcd, 8Gi PVC data-apisix-etcd-0). Adopts the release
+# installed by deploy_infra.sh. Admin/viewer keys from Vault (ExternalSecret, wave -1 in this app).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: apisix
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: default
+  sources:
+    - repoURL: https://charts.apiseven.com
+      chart: apisix
+      targetRevision: 2.15.0
+      helm:
+        releaseName: apisix
+        valueFiles:
+          - $values/kubernetes/apisix/apisix-values.yaml
+    - repoURL: https://github.com/RESILIENCE-ALPHA/infra.git
+      targetRevision: main
+      ref: values
+    - repoURL: https://github.com/RESILIENCE-ALPHA/infra.git
+      targetRevision: main
+      path: kubernetes/apisix/admin-credentials
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: apisix
+  syncPolicy:
+    # Manual first sync (review the diff), automated in a follow-up PR.
+    syncOptions:
+      - ServerSideApply=true
+      - CreateNamespace=true

@@ -1,6 +1,11 @@
 # APISIX data plane (Helm release `apisix`, chart apisix-2.15.0). HTTP + HTTPS; MQTT stream removed.
+# Synced by Argo CD (gitops/apps/apisix.yaml). Built-in dashboard: admin API /ui/, port-forward only:
+#   kubectl -n apisix port-forward svc/apisix-admin 9180:9180   ->  http://localhost:9180/ui/
 apisix:
   admin:
+    # Keys from Vault apps/apisix-admin, via ExternalSecret admin-credentials/ (keys admin, viewer).
+    credentials:
+      secretName: apisix-admin-credentials
     allow:
       ipList:
         - 127.0.0.1/24
@@ -9,10 +14,15 @@ apisix:
     enabled: true
   stream_proxy:
     enabled: false
-dashboard:
-  enabled: true
 etcd:
   replicaCount: 1
+  auth:
+    token:
+      privateKey:
+        # Reuse the existing JWT signing key. Without this the chart generates a new one on every
+        # render (its `lookup` does not work under Argo CD) and, through a checksum annotation,
+        # restarts etcd on every sync.
+        existingSecret: apisix-etcd-jwt-token
 ingress-controller:
   enabled: false
 service:

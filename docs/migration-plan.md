@@ -64,7 +64,8 @@ Progress:
 - [x] 2d — Security: cert-manager, External Secrets, Vault, Falco (sync waves -3/-2/-1/0).
       Namespace security = Vault, External Secrets, cert-manager, ClusterIssuers;
       Falco in security-apps (docs/runbooks/phase2d-security.md).
-- [ ] 2e — Gateway: APISIX, ingress controller, dashboard (admin key from Vault via ExternalSecret).
+- [x] 2e — Gateway: APISIX, ingress controller, Gateway config (admin + viewer keys from Vault via
+      ExternalSecret). Old apisix-dashboard retired: built-in UI at admin API /ui/ (port-forward).
 - [ ] 2f — Applications: Postgres, auth, payment, front, pgadmin, Ollama.
 - [ ] 2g — Delete `scripts/deploy_infra.sh`, `null_resource.deploy_infra`, `null_resource.deploy_apps`.
 
