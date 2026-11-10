@@ -14,6 +14,9 @@ kind: Job
 metadata:
   name: epsi-pay-database-seed
   namespace: applications
+  annotations:
+    # Never deleted by Argo CD (prune or app deletion): re-creating the Job re-runs the seed.
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false
   labels:
     app: epsi-pay-database
 spec:
