@@ -4,6 +4,8 @@ kind: PersistentVolumeClaim
 metadata:
   name: ollama-models
   namespace: ia
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false   # Argo CD never prunes or deletes the models
 spec:
   accessModes: [ReadWriteOnce]
   storageClassName: local-path

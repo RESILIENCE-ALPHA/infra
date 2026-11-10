@@ -48,6 +48,8 @@ kind: PersistentVolumeClaim
 metadata:
   name: pgadmin-data
   namespace: applications
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false   # Argo CD never prunes or deletes pgAdmin's data
 spec:
   accessModes: [ReadWriteOnce]
   storageClassName: local-path

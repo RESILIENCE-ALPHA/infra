@@ -1,0 +1,12 @@
+# EPSI Pay applications, synced by Argo CD (gitops/apps/epsi-pay.yaml).
+# Postgres has its own app (postgres/), synced first.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ghcr-credentials.yaml
+  - database-seed.yaml
+  - auth.yaml
+  - payment.yaml
+  - swagger-basic-auth.yaml
+  - front.yaml
+  - pgadmin.yaml

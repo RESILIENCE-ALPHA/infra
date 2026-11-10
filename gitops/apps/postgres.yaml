@@ -1,0 +1,21 @@
+# Shared Postgres server (epsi_pay database), 5Gi PVC postgres-data. Wave 1: before the apps.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: postgres
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/RESILIENCE-ALPHA/infra.git
+    targetRevision: main
+    path: kubernetes/applications/postgres
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: applications
+  syncPolicy:
+    # Manual first sync (review the diff), automated in a follow-up PR.
+    syncOptions:
+      - ServerSideApply=true

@@ -5,9 +5,6 @@
   vars:
     env_name: prod
     kubeconfig: /etc/rancher/k3s/k3s.yaml
-    postgres_image: "postgres:16"
-    databases:
-      - epsi_pay
     namespaces:
       - applications
       - admin
@@ -37,12 +34,3 @@
         name: "{{ item }}"
         state: present
       loop: "{{ namespaces }}"
-
-    - name: Deploy Postgres (one server, one database per entry of `databases`)
-      kubernetes.core.k8s:
-        kubeconfig: "{{ kubeconfig }}"
-        state: present
-        definition: "{{ lookup('template', '../kubernetes/applications/postgres.yaml') }}"
-      vars:
-        namespace: applications
-        image: "{{ postgres_image }}"

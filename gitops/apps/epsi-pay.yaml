@@ -1,0 +1,22 @@
+# EPSI Pay: auth, payment, front, pgAdmin, Swagger basic auth, database seed Job, GHCR pull secret.
+# Wave 2: after Postgres.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: epsi-pay
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/RESILIENCE-ALPHA/infra.git
+    targetRevision: main
+    path: kubernetes/applications
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: applications
+  syncPolicy:
+    # Manual first sync (review the diff), automated in a follow-up PR.
+    syncOptions:
+      - ServerSideApply=true
