@@ -107,5 +107,14 @@ database end to end.
 
 ## 4. Follow-up
 
-Automated sync for the three apps (follow-up PR). Then Phase 2g: delete `scripts/deploy_infra.sh`
-and the Terraform `null_resource`s that run it and `deploy-apps.yml`.
+Automated sync (prune + selfHeal) for `ollama`, `postgres`, `epsi-pay-seed` and `epsi-pay` (done).
+The seed Job carries `Prune=false,Delete=false`: Argo CD never deletes it. The annotation was added
+to the live Job by hand first, so the Job never shows OutOfSync and is never re-applied:
+
+```bash
+kubectl -n applications annotate job epsi-pay-database-seed \
+  argocd.argoproj.io/sync-options=Prune=false,Delete=false
+```
+
+Then Phase 2g: delete `scripts/deploy_infra.sh` and the Terraform `null_resource`s that run it
+and `deploy-apps.yml`.
