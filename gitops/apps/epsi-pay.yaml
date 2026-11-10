@@ -1,4 +1,5 @@
-# EPSI Pay: auth, payment, front, pgAdmin, Swagger basic auth, database seed Job, GHCR pull secret.
+# EPSI Pay: auth, payment, front, pgAdmin, Swagger basic auth, GHCR pull secret.
+# The database seed Job is in its own app (epsi-pay-seed.yaml).
 # Wave 2: after Postgres.
 apiVersion: argoproj.io/v1alpha1
 kind: Application

@@ -1,0 +1,36 @@
+# EPSI Pay database seed Job, in its own app so that its spec is never compared or re-applied:
+# a Job's pod template is immutable, and the seed must not run again on a database with data.
+#  - ServerSideDiff=false: the server-side dry-run would fail on the immutable template.
+#  - ignoreDifferences /spec + RespectIgnoreDifferences: the existing Job always shows Synced, and
+#    a sync keeps the live spec.
+#  - ApplyOutOfSyncOnly: a sync does not touch the Job when it is Synced.
+# On a fresh cluster the Job is Missing, so Argo CD creates it from Git. Wave 2: after Postgres.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: epsi-pay-seed
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+    argocd.argoproj.io/compare-options: ServerSideDiff=false
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/RESILIENCE-ALPHA/infra.git
+    targetRevision: main
+    path: kubernetes/applications/seed
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: applications
+  ignoreDifferences:
+    - group: batch
+      kind: Job
+      name: epsi-pay-database-seed
+      jsonPointers:
+        - /spec
+  syncPolicy:
+    # Manual first sync (review the diff), automated in a follow-up PR.
+    syncOptions:
+      - ServerSideApply=true
+      - RespectIgnoreDifferences=true
+      - ApplyOutOfSyncOnly=true
