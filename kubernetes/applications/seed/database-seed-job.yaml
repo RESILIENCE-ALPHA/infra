@@ -1,39 +1,14 @@
-# One-shot seed of the shared Postgres server. Runs to completion, then stays Completed; Argo CD does
-# not run it again while its spec is unchanged (a Job's spec is immutable).
-# Re-running on purpose: kubectl -n applications delete job epsi-pay-database-seed, then sync the
-# epsi-pay app (Argo CD recreates it). Never delete it otherwise.
-# Same database and credentials as the services: one shared Postgres database (postgres-epsi-pay-credentials).
-# The auth and payment Deployments wait for this Job through an init container, which needs read access to Jobs.
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: seed-waiter
-  namespace: applications
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: seed-waiter
-  namespace: applications
-rules:
-  - apiGroups: [batch]
-    resources: [jobs]
-    resourceNames: [epsi-pay-database-seed]
-    verbs: [get, list, watch]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: seed-waiter
-  namespace: applications
-subjects:
-  - kind: ServiceAccount
-    name: seed-waiter
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: seed-waiter
----
+# One-shot seed of the epsi_pay database: prisma db push, then the seed-10k script.
+# Synced by its own Argo CD app (gitops/apps/epsi-pay-seed.yaml), which never compares or changes
+# the spec of an existing Job: it only creates the Job when it does not exist (fresh cluster).
+#
+# DANGER: never re-run it on a database with real data. seed-10k skips only when the database holds
+# 5000 or more login attempts; below that it DELETES the existing rows and reseeds.
+# Re-running on purpose (fresh or test database only):
+#   kubectl -n applications delete job epsi-pay-database-seed, then sync epsi-pay-seed.
+#
+# The Job running in the cluster was created before this repository with the old Secret name
+# postgres-authentication-credentials; Git uses postgres-epsi-pay-credentials for new clusters.
 apiVersion: batch/v1
 kind: Job
 metadata:

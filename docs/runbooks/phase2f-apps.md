@@ -4,7 +4,8 @@
 | --- | --- | --- | --- |
 | `ollama` | `ia` | Ollama + 20Gi models PVC | 1 |
 | `postgres` | `applications` | Postgres 16 (epsi_pay), 5Gi PVC, its two ExternalSecrets | 1 |
-| `epsi-pay` | `applications` | auth, payment, front, pgAdmin (+1Gi PVC), Swagger basic auth, seed Job, GHCR pull secret | 2 |
+| `epsi-pay-seed` | `applications` | Database seed Job only (never compared or re-applied, see below) | 2 |
+| `epsi-pay` | `applications` | auth, payment, front, pgAdmin (+1Gi PVC), Swagger basic auth, GHCR pull secret | 2 |
 
 Everything is adopted in place. Postgres was an Ansible Jinja template; it is now plain YAML
 rendered for the values used at install (`databases: [epsi_pay]`, `postgres:16`, label
@@ -63,7 +64,7 @@ done | tee ~/apps-before.txt
 ```bash
 kubectl -n argocd annotate application root argocd.argoproj.io/refresh=hard --overwrite
 sleep 30
-kubectl -n argocd get applications ollama postgres epsi-pay
+kubectl -n argocd get applications ollama postgres epsi-pay-seed epsi-pay
 ```
 
 All three `OutOfSync`. Review each App Diff. Stop if anything is to be deleted, or if the
@@ -78,14 +79,20 @@ kubectl -n ia get pods -l app=ollama              # same pod, not restarted
 sync_app postgres
 kubectl -n applications get pods -l app=postgres  # same pod, not restarted (AGE unchanged)
 
+sync_app epsi-pay-seed
+kubectl -n applications get job epsi-pay-database-seed   # still the old Completed Job (same AGE)
+
 sync_app epsi-pay
 kubectl -n applications get pods
-kubectl -n applications get job epsi-pay-database-seed   # still the old Completed Job
 kubectl get externalsecret -n applications               # all SecretSynced
 ```
 
-If `epsi-pay` fails on the seed Job with `field is immutable`, the Job in Git differs from the one
-that ran. Do not delete it: paste the message (re-creating it would re-run the seed).
+Why the seed Job has its own app: the Job in the cluster was created before this repository, with
+the old Secret `postgres-authentication-credentials`. A Job's pod template is immutable, so Argo CD's
+server-side dry-run fails (`field is immutable`). Re-creating the Job would re-run the seed, and
+seed-10k deletes the data when the database has fewer than 5000 login attempts. `epsi-pay-seed`
+uses the client-side diff, ignores the Job's spec and only applies resources that are OutOfSync, so
+the existing Job is never touched; a fresh cluster still gets it from Git. Never delete the Job.
 
 ## 3. Check
 

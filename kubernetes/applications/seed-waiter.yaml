@@ -1,0 +1,31 @@
+# Lets the auth and payment init containers wait for the seed Job (kubernetes/applications/seed/,
+# its own Argo CD app epsi-pay-seed) to complete before they start.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: seed-waiter
+  namespace: applications
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: seed-waiter
+  namespace: applications
+rules:
+  - apiGroups: [batch]
+    resources: [jobs]
+    resourceNames: [epsi-pay-database-seed]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: seed-waiter
+  namespace: applications
+subjects:
+  - kind: ServiceAccount
+    name: seed-waiter
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: seed-waiter

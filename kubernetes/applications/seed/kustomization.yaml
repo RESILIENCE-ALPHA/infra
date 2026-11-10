@@ -1,0 +1,5 @@
+# Seed Job of the epsi_pay database, synced by Argo CD (gitops/apps/epsi-pay-seed.yaml).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - database-seed-job.yaml
