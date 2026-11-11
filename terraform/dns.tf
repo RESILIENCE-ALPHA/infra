@@ -1,3 +1,4 @@
+# Records of karim-portfolio.xyz. Change them here, never in the Cloudflare dashboard.
 locals {
   zone_id = "2a4877573f462d75fe023142692ed85f" # karim-portfolio.xyz
   domain  = "karim-portfolio.xyz"
