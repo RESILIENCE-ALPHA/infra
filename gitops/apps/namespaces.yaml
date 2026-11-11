@@ -1,0 +1,24 @@
+# Cluster namespaces (replaces scripts/deploy_infra.sh and ansible/deploy-apps.yml).
+# Wave -10: before every other app. The namespaces already exist; the first sync only adds
+# annotations. Each Namespace carries Prune=false,Delete=false, so Argo CD never deletes one.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: namespaces
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/RESILIENCE-ALPHA/infra.git
+    targetRevision: main
+    path: kubernetes/namespaces
+  destination:
+    server: https://kubernetes.default.svc
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
