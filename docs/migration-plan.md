@@ -88,12 +88,13 @@ Progress:
 - [x] Checked: the VPS is a classic IONOS VPS (`my.ionos.fr`), not IONOS Cloud, so the
       `ionos-cloud` provider cannot manage it; Ansible configures it. The domain is registered at
       Namecheap and its DNS is served by Cloudflare.
-- [ ] `terraform/`: Cloudflare provider v5, `cloud {}` block (organization `resilience-alpha`,
+- [x] `terraform/`: Cloudflare provider v5, `cloud {}` block (organization `resilience-alpha`,
       workspace `infra-dns`), the 20 existing records adopted with `import` blocks (no change).
       Cloudflare token scoped to the zone, stored as a sensitive workspace variable.
-- [ ] Old root Terraform retired (`main.tf`, `install_k3s.sh`, `stop_k3s.sh`); its local state
+- [x] Old root Terraform retired (`main.tf`, `install_k3s.sh`, `stop_k3s.sh`); its local state
       archived on the VPS, never applied again (docs/runbooks/phase3-terraform-dns.md).
-- [ ] Follow-up: delete `terraform/imports.tf`; review the proxied records `@`, `api`, `portainer`.
+- [x] `terraform/imports.tf` deleted after the import (20 records, then `No changes.`).
+- [ ] Review the proxied records `@`, `api`, `portainer` (still used?), one small PR each.
 - Postgres backups (were in `stop_k3s.sh`): CronJob or Velero, Phase 5.
 
 ### Phase 4 — CI/CD with GitHub Actions
