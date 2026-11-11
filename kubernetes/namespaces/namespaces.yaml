@@ -1,0 +1,51 @@
+# Every namespace the cluster uses, synced by Argo CD (gitops/apps/namespaces.yaml, wave -10).
+# argocd is created by the bootstrap (ansible/playbooks/argocd.yml) and is not listed here.
+# Prune=false,Delete=false on each: deleting a namespace deletes everything in it, so Argo CD never
+# does it, even if a namespace is removed from this file or the app is deleted.
+# EPSI Pay, Postgres, pgAdmin.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: applications
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false
+---
+# Ollama (+ service-ia, deployed from its own repository).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ia
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false
+---
+# Admin tools: observability stack (Loki, Promtail, Prometheus, Grafana, Jaeger) and Headlamp.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: admin
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false
+---
+# Secrets platform: Vault, External Secrets, cert-manager, ClusterIssuers.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: security
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false
+---
+# Runtime security agents (Falco + falcosidekick).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: security-apps
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false
+---
+# Gateway: APISIX, its etcd, the ingress controller, Gateway and certificates.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: apisix
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false

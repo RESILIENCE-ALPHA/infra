@@ -36,7 +36,6 @@ Nodes:
 - `ansible/roles/{tailscale,k3s_server,k3s_agent}`, `ansible/playbooks/k3s.yml`.
 - Inventory in `ansible/inventory/hosts.yml` (gitignored, copy `hosts.yml.example`).
 - `k3s_version` pinned in `ansible/inventory/group_vars/k3s_cluster.yml`.
-- `deploy-apps.yml` now waits for the control plane only, so an offline laptop doesn't block it.
 
 Cutover on the existing cluster:
 
@@ -68,7 +67,9 @@ Progress:
       ExternalSecret). Old apisix-dashboard retired: built-in UI at admin API /ui/ (port-forward).
 - [x] 2f — Applications: Postgres (rendered from the Ansible template), auth, payment, front,
       pgAdmin, Ollama, GHCR pull secret as a plain ExternalSecret (docs/runbooks/phase2f-apps.md).
-- [ ] 2g — Delete `scripts/deploy_infra.sh`, `null_resource.deploy_infra`, `null_resource.deploy_apps`.
+- [x] 2g — Deleted `scripts/deploy_infra.sh`, `ansible/deploy-apps.yml`, `null_resource.deploy_infra`,
+      `null_resource.deploy_apps`. Namespaces under Argo CD (`gitops/apps/namespaces.yaml`, wave -10,
+      never pruned) (docs/runbooks/phase2g-cleanup.md).
 
 
 - Bootstrap Argo CD once (Ansible task or `helm install`), then a root `Application`

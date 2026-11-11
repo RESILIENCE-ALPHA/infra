@@ -1,3 +1,8 @@
+# Installs k3s on the VPS (scripts/install_k3s.sh). Everything inside the cluster is deployed by
+# Argo CD (gitops/apps); the cluster itself is managed by Ansible (ansible/playbooks/k3s.yml).
+# This resource goes away in Phase 3 (Terraform for DNS / cloud resources, state in HCP Terraform).
+#
+# Do NOT change k3s_version here: replacing this resource runs stop_k3s.sh (destroy provisioner).
 resource "null_resource" "install_k3s" {
   triggers = {
     k3s_version = var.k3s_version
@@ -17,43 +22,6 @@ resource "null_resource" "install_k3s" {
     when        = destroy
     interpreter = ["/bin/bash", "-c"]
     command     = "bash ${path.module}/scripts/stop_k3s.sh"
-  }
-}
-
-# Namespaces + Postgres. Re-runs when the playbook, the Postgres template or the
-# environment name changes. Needs ansible/inventory.ini (see inventory.ini.example).
-resource "null_resource" "deploy_apps" {
-  depends_on = [null_resource.install_k3s]
-
-  triggers = {
-    playbook    = filesha1("${path.module}/ansible/deploy-apps.yml")
-    postgres    = filesha1("${path.module}/kubernetes/applications/postgres.yaml")
-    environment = var.environment
-  }
-
-  provisioner "local-exec" {
-    interpreter = ["/bin/bash", "-c"]
-    working_dir = path.module
-    command     = "ansible-playbook -i ansible/inventory.ini ansible/deploy-apps.yml -e env_name=${var.environment}"
-  }
-}
-
-# Helm releases, Ollama, EPSI Pay, certificates, routes. The script is idempotent
-# (helm upgrade --install / kubectl apply); it re-runs when it or any manifest changes.
-resource "null_resource" "deploy_infra" {
-  depends_on = [null_resource.deploy_apps]
-
-  triggers = {
-    script = filesha1("${path.module}/scripts/deploy_infra.sh")
-    manifests = sha1(join("", [
-      for f in sort(fileset(path.module, "kubernetes/**")) : filesha1("${path.module}/${f}")
-    ]))
-  }
-
-  provisioner "local-exec" {
-    interpreter = ["/bin/bash", "-c"]
-    working_dir = path.module
-    command     = "bash scripts/deploy_infra.sh"
   }
 }
 
