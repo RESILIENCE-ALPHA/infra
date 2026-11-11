@@ -7,3 +7,4 @@ resources:
   - clusterissuers.yaml
   - vault-backend.yaml
   - vault-httproute.yaml
+  - vault-backup.yaml
