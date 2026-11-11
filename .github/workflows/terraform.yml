@@ -1,0 +1,95 @@
+# Terraform (terraform/, Cloudflare DNS). Runs execute in HCP Terraform (workspace infra-dns), which
+# holds the state and the Cloudflare token; GitHub only holds TF_API_TOKEN (HCP team token).
+#  - pull request: fmt, validate, plan; the plan is posted as a PR comment.
+#  - merge to main: apply.
+name: terraform
+
+on:
+  pull_request:
+    paths:
+      - "terraform/**"
+      - ".github/workflows/terraform.yml"
+  push:
+    branches: [main]
+    paths:
+      - "terraform/**"
+      - ".github/workflows/terraform.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One Terraform run at a time; never cancel an apply halfway.
+concurrency:
+  group: terraform-infra-dns
+  cancel-in-progress: false
+
+defaults:
+  run:
+    working-directory: terraform
+
+env:
+  TF_IN_AUTOMATION: "true"
+  TF_INPUT: "false"
+
+jobs:
+  plan:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.17.1
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+      - name: fmt
+        run: terraform fmt -check -recursive
+      - name: init
+        run: terraform init
+      - name: validate
+        run: terraform validate -no-color
+      - name: plan
+        id: plan
+        run: terraform plan -no-color
+      - name: Comment the plan on the PR
+        if: always() && steps.plan.outcome != 'skipped'
+        uses: actions/github-script@v7
+        env:
+          PLAN: ${{ steps.plan.outputs.stdout }}
+          OUTCOME: ${{ steps.plan.outcome }}
+        with:
+          script: |
+            const plan = process.env.PLAN || '';
+            const summary = (plan.match(/^(Plan: .*|No changes\..*|Error: .*)$/m) || ['(see the logs)'])[0];
+            const body = [
+              `### Terraform plan (infra-dns): ${process.env.OUTCOME}`,
+              `**${summary}**`,
+              '<details><summary>Full plan</summary>',
+              '',
+              '```',
+              plan.length > 60000 ? plan.slice(-60000) : plan,
+              '```',
+              '</details>',
+            ].join('\n');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner, repo: context.repo.repo,
+              issue_number: context.issue.number, body,
+            });
+
+  apply:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.17.1
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+      - name: init
+        run: terraform init
+      - name: apply
+        run: terraform apply -auto-approve -no-color

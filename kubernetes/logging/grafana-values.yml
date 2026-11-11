@@ -1,20 +1,20 @@
 persistence:
-   enabled: true
-   size: 10Gi
-   annotations:
-      argocd.argoproj.io/sync-options: Prune=false,Delete=false   # Argo CD never prunes or deletes Grafana's data
-   # Bound to the existing volume (kept when moving from the logging namespace). Declared here so
-   # the rendered claim matches the live one: a bound claim's spec is immutable.
-   storageClassName: local-path
-   volumeName: pvc-b941e868-7320-4953-a033-f0aaf7330dda
-   
+  enabled: true
+  size: 10Gi
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false   # Argo CD never prunes or deletes Grafana's data
+  # Bound to the existing volume (kept when moving from the logging namespace). Declared here so
+  # the rendered claim matches the live one: a bound claim's spec is immutable.
+  storageClassName: local-path
+  volumeName: pvc-b941e868-7320-4953-a033-f0aaf7330dda
+
 admin:
-   existingSecret: grafana-admin   # created out of band, not stored in git
-   userKey: admin-user
-   passwordKey: admin-password
-   
+  existingSecret: grafana-admin   # created out of band, not stored in git
+  userKey: admin-user
+  passwordKey: admin-password
+
 service:
-   type: ClusterIP # Use ClusterIP if you plan to use an Ingress (like Traefik)
+  type: ClusterIP # Use ClusterIP if you plan to use an Ingress (like Traefik)
 
 datasources:
   datasources.yaml:
