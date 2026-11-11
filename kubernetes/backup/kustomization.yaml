@@ -1,0 +1,6 @@
+# Backup storage (RustFS), synced by Argo CD (gitops/apps/rustfs.yaml).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - rustfs-externalsecret.yaml
+  - rustfs.yaml

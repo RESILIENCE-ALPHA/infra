@@ -1,0 +1,135 @@
+# Nightly backup of the whole Postgres server (pg_dumpall), age-encrypted, uploaded to RustFS
+# (backup namespace, on apps-node), kept 90 days. Restore: docs/runbooks/backups-restore.md.
+#
+# The age public key and the RustFS keys come from Vault apps/backup. The age private key is
+# never in the cluster: it is in the password manager and only used to restore.
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: backup-target
+  namespace: applications
+spec:
+  refreshInterval: "1h"
+  secretStoreRef:
+    name: vault-backend
+    kind: ClusterSecretStore
+  target:
+    name: backup-target
+  data:
+    - secretKey: RCLONE_CONFIG_RUSTFS_ACCESS_KEY_ID
+      remoteRef:
+        key: backup      # Vault: apps/backup
+        property: rustfs_access_key
+    - secretKey: RCLONE_CONFIG_RUSTFS_SECRET_ACCESS_KEY
+      remoteRef:
+        key: backup      # Vault: apps/backup
+        property: rustfs_secret_key
+    - secretKey: AGE_RECIPIENT
+      remoteRef:
+        key: backup      # Vault: apps/backup (age public key, age1...)
+        property: age_recipient
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-backup-script
+  namespace: applications
+data:
+  backup.sh: |
+    #!/bin/sh
+    # Dump -> check -> gzip -> age -> upload -> verify -> prune older than RETENTION.
+    set -eu
+    apk add --no-cache age rclone >/dev/null
+
+    stamp=$(date -u +%Y-%m-%dT%H%M%SZ)
+    work=/work
+    dump="$work/pg-$stamp.sql"
+    out="$dump.gz.age"
+    dest="rustfs:$BUCKET/postgres"
+
+    echo "dumping $PGHOST"
+    pg_dumpall --clean --if-exists > "$dump"
+    tail -n 3 "$dump" | grep -q "PostgreSQL database cluster dump complete" \
+      || { echo "dump incomplete"; exit 1; }
+    echo "dump: $(du -h "$dump" | cut -f1)"
+
+    gzip -c "$dump" | age -r "$AGE_RECIPIENT" > "$out"
+    rm -f "$dump"
+
+    rclone mkdir "rustfs:$BUCKET"
+    rclone copy "$out" "$dest/"
+    remote_size=$(rclone size --json "$dest/$(basename "$out")" | sed -n 's/.*"bytes":\([0-9]*\).*/\1/p')
+    local_size=$(stat -c %s "$out")
+    [ "$remote_size" = "$local_size" ] || { echo "upload size mismatch: $remote_size != $local_size"; exit 1; }
+    echo "uploaded $(basename "$out") ($local_size bytes)"
+
+    rclone delete --min-age "$RETENTION" "$dest/"
+    echo "kept: $(rclone lsf "$dest/" | wc -l) backups"
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgres-backup
+  namespace: applications
+spec:
+  schedule: "30 2 * * *"
+  timeZone: Europe/Paris
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 3600
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 3                   # retries if the laptop (RustFS) is briefly unreachable
+      activeDeadlineSeconds: 3600
+      template:
+        metadata:
+          labels:
+            app: postgres-backup
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: backup
+              # Same major version as the server (postgres:16), so pg_dumpall matches.
+              image: postgres:16-alpine
+              command: ["/bin/sh", "/scripts/backup.sh"]
+              env:
+                - name: PGHOST
+                  value: postgres.applications.svc.cluster.local
+                - name: PGUSER
+                  value: postgres
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-credentials
+                      key: password
+                - name: BUCKET
+                  value: backups
+                - name: RETENTION
+                  value: 90d
+                - name: RCLONE_CONFIG_RUSTFS_TYPE
+                  value: s3
+                - name: RCLONE_CONFIG_RUSTFS_PROVIDER
+                  value: Other
+                - name: RCLONE_CONFIG_RUSTFS_ENDPOINT
+                  value: http://rustfs.backup.svc.cluster.local:9000
+                - name: RCLONE_CONFIG_RUSTFS_FORCE_PATH_STYLE
+                  value: "true"
+              envFrom:
+                - secretRef:
+                    name: backup-target
+              resources:
+                requests: {cpu: 50m, memory: 128Mi}
+                limits: {memory: 512Mi}
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                - name: work
+                  mountPath: /work
+          volumes:
+            - name: scripts
+              configMap:
+                name: postgres-backup-script
+            - name: work
+              emptyDir:
+                sizeLimit: 2Gi
