@@ -45,9 +45,8 @@ Cutover on the existing cluster:
 3. Run it for real on the server, check `kubectl get nodes -o wide` (INTERNAL-IP = Tailscale IP).
 4. `ansible-playbook playbooks/k3s.yml --limit k3s_agents` joins the laptop.
 
-Terraform keeps `null_resource.install_k3s` until Phase 3. It is harmless (it only makes
-sure k3s is running), but **do not change `k3s_version` in Terraform**: replacing that
-resource runs `stop_k3s.sh`. Versions are managed in Ansible from now on.
+Terraform kept `null_resource.install_k3s` until Phase 3, which retired it without ever running
+`apply` (its destroy provisioner ran `stop_k3s.sh`). Versions are managed in Ansible.
 
 ### Phase 2 — Argo CD replaces `deploy_infra.sh`
 
@@ -84,15 +83,18 @@ Progress:
   (it is also listed in `.gitignore` while tracked; fix that).
 - Falco: exclude or tolerate per node; `modern_ebpf` may not run on the WSL kernel.
 
-### Phase 3 — Terraform for real infrastructure, state in HCP Terraform
+### Phase 3 — Terraform for DNS, state in HCP Terraform
 
-- `terraform/` folder with a `cloud {}` block (HCP organization + workspace).
-- Check the IONOS product first: the classic IONOS **VPS** is not managed by the
-  `ionos-cloud` provider (that one covers IONOS Cloud / Cubes). If it stays a classic VPS,
-  Terraform manages the DNS records (and later anything API-driven); if it moves to IONOS
-  Cloud, Terraform also creates the server and its firewall.
-- Remove `null_resource.install_k3s`, `scripts/install_k3s.sh`, `scripts/stop_k3s.sh`
-  (Postgres backups move to a CronJob or Velero, managed by Argo CD).
+- [x] Checked: the VPS is a classic IONOS VPS (`my.ionos.fr`), not IONOS Cloud, so the
+      `ionos-cloud` provider cannot manage it; Ansible configures it. The domain is registered at
+      Namecheap and its DNS is served by Cloudflare.
+- [ ] `terraform/`: Cloudflare provider v5, `cloud {}` block (organization `resilience-alpha`,
+      workspace `infra-dns`), the 20 existing records adopted with `import` blocks (no change).
+      Cloudflare token scoped to the zone, stored as a sensitive workspace variable.
+- [ ] Old root Terraform retired (`main.tf`, `install_k3s.sh`, `stop_k3s.sh`); its local state
+      archived on the VPS, never applied again (docs/runbooks/phase3-terraform-dns.md).
+- [ ] Follow-up: delete `terraform/imports.tf`; review the proxied records `@`, `api`, `portainer`.
+- Postgres backups (were in `stop_k3s.sh`): CronJob or Velero, Phase 5.
 
 ### Phase 4 — CI/CD with GitHub Actions
 
