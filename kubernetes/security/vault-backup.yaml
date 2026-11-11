@@ -1,0 +1,133 @@
+# Nightly backup of Vault's file storage (PVC data-vault-0) to RustFS: s3://backups/vault/, 90 days.
+# The data is encrypted by Vault itself (barrier): it is useless without the unseal keys.
+# The job mounts the same volume read-only, on the same node (RWO allows that), next to the
+# running Vault. Restore: docs/runbooks/backups-restore.md ("Vault").
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: backup-target
+  namespace: security
+spec:
+  refreshInterval: "1h"
+  secretStoreRef:
+    name: vault-backend
+    kind: ClusterSecretStore
+  target:
+    name: backup-target
+  data:
+    - secretKey: RCLONE_CONFIG_RUSTFS_ACCESS_KEY_ID
+      remoteRef:
+        key: backup      # Vault: apps/backup
+        property: rustfs_access_key
+    - secretKey: RCLONE_CONFIG_RUSTFS_SECRET_ACCESS_KEY
+      remoteRef:
+        key: backup      # Vault: apps/backup
+        property: rustfs_secret_key
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vault-backup-script
+  namespace: security
+data:
+  backup.sh: |
+    #!/bin/sh
+    # tar.gz of the Vault data directory -> check -> upload -> verify -> prune.
+    set -eu
+    apk add --no-cache rclone >/dev/null
+    export RCLONE_CONFIG=/dev/null
+
+    stamp=$(date -u +%Y-%m-%dT%H%M%SZ)
+    out="/work/vault-$stamp.tar.gz"
+    dest="rustfs:$BUCKET/vault"
+
+    [ -d /vault-data/core ] || { echo "/vault-data/core missing: not a Vault file storage"; exit 1; }
+    tar czf "$out" -C /vault-data .
+    files=$(tar tzf "$out" | grep -vc '/$')
+    echo "archive: $(du -h "$out" | cut -f1), $files files"
+
+    rclone mkdir -q "rustfs:$BUCKET"
+    rclone copy -q "$out" "$dest/"
+    remote_size=$(rclone size -q --json "$dest/$(basename "$out")" | sed -n 's/.*"bytes":\([0-9]*\).*/\1/p')
+    local_size=$(stat -c %s "$out")
+    [ "$remote_size" = "$local_size" ] || { echo "upload size mismatch: $remote_size != $local_size"; exit 1; }
+    echo "uploaded $(basename "$out") ($local_size bytes)"
+
+    rclone delete -q --min-age "$RETENTION" "$dest/"
+    echo "kept: $(rclone lsf -q "$dest/" | wc -l) backups"
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: vault-backup
+  namespace: security
+spec:
+  schedule: "0 3 * * *"
+  timeZone: Europe/Paris
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 3600
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 3
+      activeDeadlineSeconds: 1800
+      template:
+        metadata:
+          labels:
+            app: vault-backup
+        spec:
+          restartPolicy: Never
+          # Same node as vault-0 (local-path volume); no fsGroup, so the volume is never chowned.
+          affinity:
+            podAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchLabels:
+                      app.kubernetes.io/name: vault
+                      component: server
+                  topologyKey: kubernetes.io/hostname
+          containers:
+            - name: backup
+              image: alpine:3.22
+              command: ["/bin/sh", "/scripts/backup.sh"]
+              env:
+                - name: BUCKET
+                  value: backups
+                - name: RETENTION
+                  value: 90d
+                - name: RCLONE_CONFIG_RUSTFS_TYPE
+                  value: s3
+                - name: RCLONE_CONFIG_RUSTFS_PROVIDER
+                  value: Other
+                - name: RCLONE_CONFIG_RUSTFS_ENDPOINT
+                  value: http://rustfs.backup.svc.cluster.local:9000
+                - name: RCLONE_CONFIG_RUSTFS_FORCE_PATH_STYLE
+                  value: "true"
+              envFrom:
+                - secretRef:
+                    name: backup-target
+              resources:
+                requests: {cpu: 50m, memory: 64Mi}
+                limits: {memory: 256Mi}
+              securityContext:
+                allowPrivilegeEscalation: false
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                - name: work
+                  mountPath: /work
+                - name: vault-data
+                  mountPath: /vault-data
+                  readOnly: true
+          volumes:
+            - name: scripts
+              configMap:
+                name: vault-backup-script
+            - name: work
+              emptyDir:
+                sizeLimit: 1Gi
+            - name: vault-data
+              persistentVolumeClaim:
+                claimName: data-vault-0
+                readOnly: true

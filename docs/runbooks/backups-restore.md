@@ -4,7 +4,9 @@
 | --- | --- | --- |
 | Backup storage | RustFS 1.0 in namespace `backup`, pinned to **apps-node** (the laptop) | Argo CD app `rustfs`; data on the laptop's WSL disk (`local-path`), never pruned |
 | Postgres backup | CronJob `applications/postgres-backup`, every night 02:30 Paris | `pg_dumpall` → gzip → `s3://backups/postgres/pg-<date>.sql.gz` on RustFS, kept **90 days** |
-| Keys | Vault `apps/backup`: `rustfs_access_key`, `rustfs_secret_key` | |
+| k3s datastore | CronJob `backup/k3s-backup`, 02:45, on the VPS | SQLite online backup of `state.db` + integrity check + server token → `s3://backups/k3s/k3s-<date>.tar.gz`, 90 days |
+| Vault | CronJob `security/vault-backup`, 03:00, next to `vault-0` | `tar.gz` of the file storage (read-only mount) → `s3://backups/vault/vault-<date>.tar.gz`, 90 days |
+| Keys | Vault `apps/backup`: `rustfs_access_key`, `rustfs_secret_key` | ExternalSecret `backup-target` in `applications`, `backup`, `security` |
 
 **Not encrypted** (decision of 2026-11-11): the dumps, which contain the payment data, are stored in
 clear on the laptop's disk, and that disk is not encrypted (Windows 10 Home, no device encryption).
@@ -99,7 +101,7 @@ cd ~; rm -rf /tmp/restore
 kill %1 2>/dev/null     # stop the port-forward
 ```
 
-Write the restore time down here: ______ (date: ______).
+Restore test: **25 s, 2026-11-11** (row counts identical to production).
 
 ## Restoring production (disaster only)
 
@@ -123,6 +125,56 @@ container directly on that folder to read the objects.
    The job then writes `.sql.gz.age` and refuses anything that is not an `age1...` public key.
 4. Restore: `age -d -i key.txt <file> | gunzip | psql ...`
 
-## Next (5.1b)
+## k3s datastore and Vault backups (5.1b)
 
-k3s datastore (SQLite) and Vault data backups to the same bucket.
+The k3s archive holds the server token and every Kubernetes object, Secrets included, **in clear**:
+anyone who can read it can take over the cluster. Vault's archive is encrypted by Vault itself and
+useless without the unseal keys.
+
+Pre-checks, before merging:
+
+```bash
+kubectl -n security get pod vault-0 --show-labels | grep -o 'app.kubernetes.io/name=vault\|component=server'   # both
+```
+
+On the VPS (root):
+
+```bash
+ls -l /var/lib/rancher/k3s/server/db/state.db /var/lib/rancher/k3s/server/token
+```
+
+After the merge, run both jobs once by hand:
+
+```bash
+kubectl -n backup create job --from=cronjob/k3s-backup k3s-backup-first
+kubectl -n backup logs -f job/k3s-backup-first          # datastore: ..., kine rows / uploaded k3s-....tar.gz
+kubectl -n security create job --from=cronjob/vault-backup vault-backup-first
+kubectl -n security logs -f job/vault-backup-first      # archive: ..., N files / uploaded vault-....tar.gz
+kubectl -n security get pod vault-0                     # unchanged (Running, same age, unsealed)
+```
+
+Check an archive's content (step 5 variables set):
+
+```bash
+rclone lsl rustfs:backups/k3s/ rustfs:backups/vault/
+rclone cat rustfs:backups/k3s/$(rclone lsf -q rustfs:backups/k3s/ | sort | tail -1) | tar tzv
+```
+
+### Restoring the k3s datastore (cluster lost or broken)
+
+On the VPS, after reinstalling the same k3s version with Ansible:
+
+1. `systemctl stop k3s`
+2. Extract the chosen archive; copy `state.db` to `/var/lib/rancher/k3s/server/db/state.db` (remove any
+   `state.db-wal` / `state.db-shm` there) and `token` to `/var/lib/rancher/k3s/server/token`.
+3. `systemctl start k3s`; `kubectl get nodes`, `kubectl get applications -n argocd`.
+
+Everything in Git comes back through Argo CD anyway; the datastore restore brings back what is not in
+Git (Secrets created by hand, the External Secrets bootstrap token, PV bindings).
+
+### Restoring Vault
+
+1. Scale the StatefulSet down: `kubectl -n security scale sts vault --replicas=0`.
+2. Extract the archive into the `data-vault-0` volume folder on the VPS
+   (`/var/lib/rancher/k3s/storage/pvc-*_security_data-vault-0/`, emptied first; files owned by uid 100).
+3. Scale back to 1 and unseal ×3 with the unseal keys.

@@ -114,7 +114,8 @@ Progress:
 
 - [ ] 5.1 Backups: RustFS on apps-node (Argo CD app `rustfs`, namespace `backup`); nightly Postgres
       backup CronJob, gzip (not encrypted, decision 2026-11-11), 90 days; restore test (docs/runbooks/backups-restore.md).
-      Next: k3s datastore and Vault backups (5.1b).
+      Restore test done (25 s, identical row counts).
+- [ ] 5.1b k3s datastore (SQLite online backup + token) and Vault file storage, nightly to RustFS, 90 days.
 
 - Tailscale ACLs: `tag:ci` and admins can SSH to `tag:k3s` nodes, nodes talk to each other.
 - kubeconfig mode `0600`, dedicated CI service account instead of the admin kubeconfig.
