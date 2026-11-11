@@ -9,6 +9,7 @@ ansible/playbooks/argocd.yml          Argo CD + root app of apps (gitops/root.ya
 gitops/apps/                          One Argo CD Application per component (GitOps)
 docs/migration-plan.md                Plan to move to Ansible + Argo CD + Terraform (HCP) + CI
 kubernetes/                           Manifests and Helm values synced by Argo CD (namespaces/, applications/, ...)
+.github/workflows/                    CI: lint (YAML, Ansible, Kubernetes manifests), Terraform plan/apply
 docs/runbooks/                        Step-by-step procedures (migrations, VPS reboot)
 docs/wsl-node.md                      Windows laptop as a k3s agent (WSL2): setup and autostart
 ```
@@ -27,6 +28,12 @@ The k3s version is pinned in `ansible/inventory/group_vars/k3s_cluster.yml`.
 Everything inside the cluster is in Git: `gitops/root.yaml` (app of apps) points at `gitops/apps/`,
 one Application per component, all with automated sync. A change is a pull request; Argo CD applies
 it after the merge. Bootstrap on a new cluster: `ansible-playbook playbooks/argocd.yml`.
+
+## CI (GitHub Actions)
+Every pull request runs `lint` (yamllint, actionlint, ansible-lint, kustomize + kubeconform) and, when
+`terraform/` changes, `terraform` (plan posted as a PR comment). Merging to `main` applies Terraform.
+Run the same checks locally: `yamllint --strict .`, `cd ansible && ansible-lint`,
+`scripts/validate-manifests.sh`.
 
 ## Terraform (DNS)
 `terraform/` manages the DNS records in Cloudflare. State and runs are in HCP Terraform

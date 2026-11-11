@@ -99,9 +99,15 @@ Progress:
 
 ### Phase 4 — CI/CD with GitHub Actions
 
-- On pull requests: `yamllint`, `ansible-lint`, `terraform fmt/validate/plan`, Argo CD diff.
-- On merge to `main`: `terraform apply`, `ansible-playbook playbooks/k3s.yml`.
-  The runner joins the tailnet with `tailscale/github-action` (OAuth client, `tag:ci`).
+- [ ] `.github/workflows/lint.yml`, on every PR and on main (no secrets, no cluster access):
+      yamllint (`.yamllint.yml`), actionlint, ansible-lint (production profile), and every Argo CD
+      source folder built with kustomize and validated with kubeconform (`scripts/validate-manifests.sh`).
+- [ ] `.github/workflows/terraform.yml`: on PRs touching `terraform/`: fmt, validate, plan (posted
+      as a PR comment); on merge to main: apply. Runs execute in HCP Terraform; GitHub holds only
+      `TF_API_TOKEN`.
+- [ ] Ruleset on `main`: PR required, the checks above required (docs/runbooks/phase4-ci.md).
+- Later (4b): Ansible from CI over Tailscale (`tailscale/github-action`, `tag:ci`): `--check --diff`
+  on PRs touching `ansible/`, real run by manual dispatch only. Argo CD diff on PRs.
 - Argo CD syncs the cluster by itself.
 
 ### Phase 5 — Hardening

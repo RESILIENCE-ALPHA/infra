@@ -1,0 +1,59 @@
+# Static checks on every pull request and on main. No secrets, no cluster access.
+name: lint
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lint-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  yamllint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install yamllint==1.38.0 actionlint-py==1.7.12.25
+      - run: yamllint --strict .
+      - name: actionlint (GitHub Actions workflows)
+        run: actionlint
+
+  ansible-lint:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: ansible
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install ansible-lint==26.10.1
+      - run: ansible-galaxy collection install -r requirements.yml
+      - run: ansible-lint
+
+  kubernetes:
+    runs-on: ubuntu-24.04
+    env:
+      KUSTOMIZE_VERSION: "5.7.1"
+      KUBECONFORM_VERSION: "0.7.0"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install kustomize and kubeconform
+        run: |
+          mkdir -p "$HOME/bin"
+          base=https://github.com/kubernetes-sigs/kustomize/releases/download
+          curl -sSfL "$base/kustomize%2Fv${KUSTOMIZE_VERSION}/kustomize_v${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" \
+            | tar xz -C "$HOME/bin" kustomize
+          curl -sSfL "https://github.com/yannh/kubeconform/releases/download/v${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" \
+            | tar xz -C "$HOME/bin" kubeconform
+          echo "$HOME/bin" >> "$GITHUB_PATH"
+      - run: scripts/validate-manifests.sh
