@@ -87,7 +87,7 @@ From now on nobody runs Terraform on the VPS.
 
 ## 7. Follow-up PR
 
-- Delete `terraform/imports.tf` (import blocks are one-shot), plan: `No changes.`
+- Delete `terraform/imports.tf` (import blocks are one-shot), plan: `No changes.` (done)
 - Review the proxied records `@`, `api`, `portainer` (still used?), one small PR each.
 
 ## Rollback
