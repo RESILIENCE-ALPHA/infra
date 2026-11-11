@@ -113,7 +113,7 @@ Progress:
 ### Phase 5 — Hardening
 
 - [ ] 5.1 Backups: RustFS on apps-node (Argo CD app `rustfs`, namespace `backup`); nightly Postgres
-      backup CronJob, age-encrypted, 90 days; restore test (docs/runbooks/backups-restore.md).
+      backup CronJob, gzip (not encrypted, decision 2026-11-11), 90 days; restore test (docs/runbooks/backups-restore.md).
       Next: k3s datastore and Vault backups (5.1b).
 
 - Tailscale ACLs: `tag:ci` and admins can SSH to `tag:k3s` nodes, nodes talk to each other.

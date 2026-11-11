@@ -1,8 +1,9 @@
-# Nightly backup of the whole Postgres server (pg_dumpall), age-encrypted, uploaded to RustFS
+# Nightly backup of the whole Postgres server (pg_dumpall), gzipped, uploaded to RustFS
 # (backup namespace, on apps-node), kept 90 days. Restore: docs/runbooks/backups-restore.md.
 #
-# The age public key and the RustFS keys come from Vault apps/backup. The age private key is
-# never in the cluster: it is in the password manager and only used to restore.
+# Not encrypted (decision of 2026-11-11): the dumps sit in clear on the laptop disk, which is not
+# encrypted either. To turn age encryption on later, set AGE_RECIPIENT (an age1... public key),
+# e.g. from Vault apps/backup through this ExternalSecret: the script then writes .sql.gz.age.
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
@@ -24,10 +25,6 @@ spec:
       remoteRef:
         key: backup      # Vault: apps/backup
         property: rustfs_secret_key
-    - secretKey: AGE_RECIPIENT
-      remoteRef:
-        key: backup      # Vault: apps/backup (age public key, age1...)
-        property: age_recipient
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -37,15 +34,22 @@ metadata:
 data:
   backup.sh: |
     #!/bin/sh
-    # Dump -> check -> gzip -> age -> upload -> verify -> prune older than RETENTION.
+    # Dump -> check -> gzip [-> age] -> upload -> verify -> prune older than RETENTION.
     set -eu
-    apk add --no-cache age rclone >/dev/null
+    apk add --no-cache rclone >/dev/null
+    export RCLONE_CONFIG=/dev/null        # remotes come from RCLONE_CONFIG_RUSTFS_* variables
 
     stamp=$(date -u +%Y-%m-%dT%H%M%SZ)
     work=/work
     dump="$work/pg-$stamp.sql"
-    out="$dump.gz.age"
     dest="rustfs:$BUCKET/postgres"
+
+    recipient=${AGE_RECIPIENT:-}
+    case "$recipient" in
+      "") out="$dump.gz" ;;
+      age1*) apk add --no-cache age >/dev/null; out="$dump.gz.age" ;;
+      *) echo "AGE_RECIPIENT is not an age public key (age1...): refusing"; exit 1 ;;
+    esac
 
     echo "dumping $PGHOST"
     pg_dumpall --clean --if-exists > "$dump"
@@ -53,18 +57,22 @@ data:
       || { echo "dump incomplete"; exit 1; }
     echo "dump: $(du -h "$dump" | cut -f1)"
 
-    gzip -c "$dump" | age -r "$AGE_RECIPIENT" > "$out"
+    if [ -n "$recipient" ]; then
+      gzip -c "$dump" | age -r "$recipient" > "$out"
+    else
+      gzip -c "$dump" > "$out"
+    fi
     rm -f "$dump"
 
-    rclone mkdir "rustfs:$BUCKET"
-    rclone copy "$out" "$dest/"
-    remote_size=$(rclone size --json "$dest/$(basename "$out")" | sed -n 's/.*"bytes":\([0-9]*\).*/\1/p')
+    rclone mkdir -q "rustfs:$BUCKET"
+    rclone copy -q "$out" "$dest/"
+    remote_size=$(rclone size -q --json "$dest/$(basename "$out")" | sed -n 's/.*"bytes":\([0-9]*\).*/\1/p')
     local_size=$(stat -c %s "$out")
     [ "$remote_size" = "$local_size" ] || { echo "upload size mismatch: $remote_size != $local_size"; exit 1; }
     echo "uploaded $(basename "$out") ($local_size bytes)"
 
-    rclone delete --min-age "$RETENTION" "$dest/"
-    echo "kept: $(rclone lsf "$dest/" | wc -l) backups"
+    rclone delete -q --min-age "$RETENTION" "$dest/"
+    echo "kept: $(rclone lsf -q "$dest/" | wc -l) backups"
 ---
 apiVersion: batch/v1
 kind: CronJob
