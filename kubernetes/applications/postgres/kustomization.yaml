@@ -1,6 +1,7 @@
-# Shared Postgres server + its credentials, synced by Argo CD (gitops/apps/postgres.yaml).
+# Shared Postgres server, its credentials and its nightly backup, synced by Argo CD (gitops/apps/postgres.yaml).
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - postgres-externalsecrets.yaml
   - postgres.yaml
+  - postgres-backup.yaml
