@@ -1,0 +1,26 @@
+---
+# Public ports, the same list as the IONOS firewall policy (the outer layer, edited in the IONOS
+# panel). NodePorts and k3s ServiceLB bypass ufw: the IONOS policy is what filters those.
+firewall_public_rules:
+  - {port: "22", proto: tcp, comment: "ssh (fallback when Tailscale is down; keys only)"}
+  - {port: "80", proto: tcp, comment: "apisix http + Let's Encrypt HTTP-01"}
+  - {port: "443", proto: tcp, comment: "apisix https"}
+  - {port: "41641", proto: udp, comment: "tailscale direct connections"}
+
+# Everything from the tailnet (API 6443, kubelet 10250, flannel 8472, node-exporter 9100...).
+firewall_trusted_interfaces:
+  - tailscale0
+
+# k3s pod and service networks (k3s docs: required when ufw is enabled).
+firewall_trusted_networks:
+  - 10.42.0.0/16
+  - 10.43.0.0/16
+
+# Rules from before this role, removed if present (port + proto as ufw shows them).
+firewall_stale_rules:
+  - {port: "9000", proto: tcp}
+  - {port: "9001", proto: tcp}
+  - {port: "30092", proto: any}
+  - {port: "8080", proto: any}
+  - {port: "32000", proto: tcp}
+  - {port: "1883", proto: tcp}

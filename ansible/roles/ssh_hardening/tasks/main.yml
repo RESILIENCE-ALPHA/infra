@@ -1,0 +1,32 @@
+---
+# Keys only, root with a key only, fewer attempts per connection, fail2ban on sshd.
+# Run only after checking that every machine you use logs in with a key (runbook step 0).
+
+- name: SSH hardening drop-in
+  ansible.builtin.template:
+    src: 00-hardening.conf.j2
+    dest: /etc/ssh/sshd_config.d/00-hardening.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Check and reload sshd
+
+- name: Install fail2ban
+  ansible.builtin.apt:
+    name: fail2ban
+    state: present
+
+- name: Fail2ban jail for sshd
+  ansible.builtin.template:
+    src: sshd.local.j2
+    dest: /etc/fail2ban/jail.d/sshd.local
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart fail2ban
+
+- name: Fail2ban running
+  ansible.builtin.service:
+    name: fail2ban
+    state: started
+    enabled: true

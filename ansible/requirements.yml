@@ -1,3 +1,4 @@
 ---
 collections:
   - name: kubernetes.core   # used by playbooks/argocd.yml
+  - name: community.general   # ufw module (roles/firewall)

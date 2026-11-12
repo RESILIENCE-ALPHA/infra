@@ -1,0 +1,55 @@
+---
+# ufw on the VPS: deny incoming by default, allow the public list, the tailnet and the k3s
+# networks. Routed traffic is left as it is (k3s manages its own forwarding rules).
+
+- name: Install ufw
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+
+# Allow rules first, so SSH stays open while the policy is (re)applied.
+- name: Allow the public ports
+  community.general.ufw:
+    rule: allow
+    port: "{{ item.port }}"
+    proto: "{{ item.proto }}"
+    comment: "{{ item.comment }}"
+  loop: "{{ firewall_public_rules }}"
+  loop_control:
+    label: "{{ item.port }}/{{ item.proto }}"
+
+- name: Allow everything on the trusted interfaces
+  community.general.ufw:
+    rule: allow
+    direction: in
+    interface: "{{ item }}"
+    comment: "tailnet"
+  loop: "{{ firewall_trusted_interfaces }}"
+
+- name: Allow the k3s pod and service networks
+  community.general.ufw:
+    rule: allow
+    from_ip: "{{ item }}"
+    comment: "k3s"
+  loop: "{{ firewall_trusted_networks }}"
+
+- name: Remove stale rules
+  community.general.ufw:
+    rule: allow
+    port: "{{ item.port }}"
+    proto: "{{ item.proto }}"
+    delete: true
+  loop: "{{ firewall_stale_rules }}"
+  loop_control:
+    label: "{{ item.port }}/{{ item.proto }}"
+
+- name: Default policies and enable
+  community.general.ufw:
+    state: enabled
+    direction: "{{ item.direction }}"
+    default: "{{ item.policy }}"
+  loop:
+    - {direction: incoming, policy: deny}
+    - {direction: outgoing, policy: allow}
+  loop_control:
+    label: "{{ item.direction }} {{ item.policy }}"

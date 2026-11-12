@@ -1,0 +1,9 @@
+---
+ssh_hardening_max_auth_tries: 3
+# Never banned by fail2ban: the tailnet (CGNAT range used by Tailscale).
+ssh_hardening_fail2ban_ignoreip:
+  - 127.0.0.1/8
+  - 100.64.0.0/10
+ssh_hardening_fail2ban_maxretry: 5
+ssh_hardening_fail2ban_findtime: 10m
+ssh_hardening_fail2ban_bantime: 1h

@@ -1,0 +1,9 @@
+# {{ ansible_managed }}
+# Named 00-* so it is read before 50-cloud-init.conf: sshd keeps the FIRST value it finds.
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+PermitRootLogin prohibit-password
+PubkeyAuthentication yes
+PermitEmptyPasswords no
+MaxAuthTries {{ ssh_hardening_max_auth_tries }}
+X11Forwarding no

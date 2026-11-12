@@ -1,0 +1,14 @@
+---
+# VPS hardening: ufw (same public ports as the IONOS firewall) and SSH (keys only, fail2ban).
+# Runbook: docs/runbooks/vps-hardening.md. Always dry-run first:
+#
+#   cd ansible
+#   ansible-playbook playbooks/hardening.yml --check --diff
+#   ansible-playbook playbooks/hardening.yml
+
+- name: Harden the VPS
+  hosts: k3s_server
+  become: true
+  roles:
+    - firewall
+    - ssh_hardening
