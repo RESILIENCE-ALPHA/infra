@@ -1,0 +1,11 @@
+---
+galaxy_info:
+  role_name: firewall
+  author: resilience-alpha
+  description: ufw on the VPS, public ports aligned with the IONOS firewall policy, tailnet and k3s networks trusted.
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Ubuntu
+      versions: [noble]
+dependencies: []

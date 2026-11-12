@@ -112,10 +112,13 @@ Progress:
 
 ### Phase 5 — Hardening
 
-- [ ] 5.1 Backups: RustFS on apps-node (Argo CD app `rustfs`, namespace `backup`); nightly Postgres
+- [x] 5.1 Backups: RustFS on apps-node (Argo CD app `rustfs`, namespace `backup`); nightly Postgres
       backup CronJob, gzip (not encrypted, decision 2026-11-11), 90 days; restore test (docs/runbooks/backups-restore.md).
       Restore test done (25 s, identical row counts).
-- [ ] 5.1b k3s datastore (SQLite online backup + token) and Vault file storage, nightly to RustFS, 90 days.
+- [x] 5.1b k3s datastore (SQLite online backup + token) and Vault file storage, nightly to RustFS, 90 days.
+- [ ] 5.3 VPS firewall and SSH: IONOS policy reduced to TCP 22/80/443 + UDP 41641 (done by hand);
+      ufw (role `firewall`) aligned; SSH keys only + fail2ban (role `ssh_hardening`),
+      playbook `playbooks/hardening.yml` (docs/runbooks/vps-hardening.md).
 
 - Tailscale ACLs: `tag:ci` and admins can SSH to `tag:k3s` nodes, nodes talk to each other.
 - kubeconfig mode `0600`, dedicated CI service account instead of the admin kubeconfig.

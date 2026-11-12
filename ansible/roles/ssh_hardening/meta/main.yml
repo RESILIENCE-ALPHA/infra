@@ -1,0 +1,11 @@
+---
+galaxy_info:
+  role_name: ssh_hardening
+  author: resilience-alpha
+  description: sshd keys only (root with a key only), fewer auth tries, fail2ban jail for sshd.
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Ubuntu
+      versions: [noble]
+dependencies: []
