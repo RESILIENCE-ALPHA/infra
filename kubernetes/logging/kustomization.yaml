@@ -8,6 +8,7 @@ resources:
   - jaeger-ui.yaml
   - grafana-httproute.yaml
   - grafana-externalsecret.yaml
+  - alertmanager-discord-externalsecret.yaml
 configMapGenerator:
   - name: grafana-dashboard-apisix-api-logs
     files:

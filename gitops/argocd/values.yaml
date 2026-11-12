@@ -39,6 +39,13 @@ notifications:
   enabled: false
 
 controller:
+  # Metrics service (argocd_app_info...), scraped by Prometheus through its annotations.
+  metrics:
+    enabled: true
+    service:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8082"
   resources:
     requests: {cpu: 100m, memory: 256Mi}
     limits: {memory: 768Mi}
