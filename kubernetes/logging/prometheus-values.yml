@@ -10,7 +10,144 @@ server:
     # the rendered claim matches the live one: a bound claim's spec is immutable.
     storageClass: local-path
     volumeName: pvc-cf9d15a0-ff3c-446a-b73d-4ef9885ef4a6
+
+# Alertmanager: one replica on the VPS, alerts to Discord (webhook from Vault, mounted as a file).
+# Runbook: docs/runbooks/alerting.md.
 alertmanager:
-  enabled: false
+  enabled: true
+  nodeSelector:
+    node-role.kubernetes.io/control-plane: "true"
+  persistence:
+    enabled: true
+    size: 100Mi
+    storageClass: local-path
+    annotations:
+      argocd.argoproj.io/sync-options: Prune=false,Delete=false   # silences and notification state
+  resources:
+    requests: {cpu: 10m, memory: 32Mi}
+    limits: {memory: 128Mi}
+  extraSecretMounts:
+    - name: discord
+      mountPath: /etc/alertmanager/discord
+      secretName: alertmanager-discord
+      readOnly: true
+  config:
+    global:
+      resolve_timeout: 5m
+    route:
+      receiver: discord
+      group_by: [alertname, namespace]
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 12h
+    receivers:
+      - name: discord
+        discord_configs:
+          - webhook_url_file: /etc/alertmanager/discord/webhook-url
+            send_resolved: true
+    inhibit_rules:
+      # A node that is down explains the targets and pods failing on it: send only the node alert.
+      - source_matchers: [alertname="NodeNotReady"]
+        target_matchers: [alertname=~"TargetDown|KubeDeploymentUnavailable|KubePodCrashLooping"]
+        equal: [node]
+
+# Alert rules. Severity: critical = act now, warning = look today.
+serverFiles:
+  alerting_rules.yml:
+    groups:
+      - name: nodes
+        rules:
+          - alert: NodeNotReady
+            expr: kube_node_status_condition{condition="Ready",status="true"} == 0
+            for: 10m
+            labels: {severity: critical}
+            annotations:
+              summary: "Node {{ $labels.node }} is NotReady"
+              description: "Kubernetes reports {{ $labels.node }} NotReady for 10 min (apps-node: laptop asleep or WSL stopped?)."
+          - alert: NodeDiskAlmostFull
+            expr: |
+              node_filesystem_avail_bytes{mountpoint="/",fstype=~"ext4|xfs"}
+                / node_filesystem_size_bytes{mountpoint="/",fstype=~"ext4|xfs"} < 0.15
+            for: 15m
+            labels: {severity: warning}
+            annotations:
+              summary: "Disk / on {{ $labels.instance }} has less than 15% free"
+              description: "{{ $value | humanizePercentage }} free on / ({{ $labels.instance }})."
+      - name: workloads
+        rules:
+          - alert: KubeDeploymentUnavailable
+            expr: kube_deployment_spec_replicas > 0 and kube_deployment_status_replicas_available == 0
+            for: 10m
+            labels: {severity: critical}
+            annotations:
+              summary: "{{ $labels.namespace }}/{{ $labels.deployment }} has no available pod"
+          - alert: KubePodCrashLooping
+            expr: increase(kube_pod_container_status_restarts_total[15m]) > 3
+            for: 5m
+            labels: {severity: warning}
+            annotations:
+              summary: "{{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container }}) is restarting"
+              description: "{{ $value | humanize }} restarts in 15 min."
+          - alert: VaultNotReady
+            expr: kube_pod_container_status_ready{namespace="security",pod="vault-0",container="vault"} == 0
+            for: 5m
+            labels: {severity: critical}
+            annotations:
+              summary: "Vault is not ready (sealed?)"
+              description: "vault-0 not ready for 5 min: unseal it (docs/runbooks/vps-reboot.md). Secrets cannot refresh meanwhile."
+      - name: backups
+        rules:
+          - alert: BackupTooOld
+            expr: time() - kube_cronjob_status_last_successful_time{cronjob=~"postgres-backup|k3s-backup|vault-backup"} > 26 * 3600
+            for: 10m
+            labels: {severity: critical}
+            annotations:
+              summary: "No successful {{ $labels.cronjob }} for more than 26 h"
+              description: "Last success {{ $value | humanizeDuration }} ago. Check RustFS (apps-node) and the job logs."
+          - alert: BackupJobFailed
+            expr: |
+              kube_job_failed{condition="true",job_name=~"(postgres|k3s|vault)-backup.*"} == 1
+                and on (namespace, job_name) (time() - kube_job_status_start_time < 86400)
+            labels: {severity: critical}
+            annotations:
+              summary: "Backup job {{ $labels.namespace }}/{{ $labels.job_name }} failed"
+              description: "kubectl -n {{ $labels.namespace }} logs job/{{ $labels.job_name }}"
+      - name: certificates
+        rules:
+          - alert: CertificateExpiringSoon
+            expr: certmanager_certificate_expiration_timestamp_seconds - time() < 14 * 86400
+            for: 1h
+            labels: {severity: warning}
+            annotations:
+              summary: "Certificate {{ $labels.namespace }}/{{ $labels.name }} expires in less than 14 days"
+              description: "Expires in {{ $value | humanizeDuration }}; cert-manager should have renewed it."
+          - alert: CertificateNotReady
+            expr: certmanager_certificate_ready_status{condition="False"} == 1
+            for: 30m
+            labels: {severity: warning}
+            annotations:
+              summary: "Certificate {{ $labels.namespace }}/{{ $labels.name }} is not Ready"
+      - name: argocd
+        rules:
+          - alert: ArgoCDAppUnhealthy
+            expr: argocd_app_info{health_status!~"Healthy|Progressing"} == 1
+            for: 15m
+            labels: {severity: warning}
+            annotations:
+              summary: "Argo CD app {{ $labels.name }} is {{ $labels.health_status }}"
+          - alert: ArgoCDAppOutOfSync
+            expr: argocd_app_info{sync_status="OutOfSync"} == 1
+            for: 30m
+            labels: {severity: warning}
+            annotations:
+              summary: "Argo CD app {{ $labels.name }} is OutOfSync for 30 min"
+      - name: monitoring
+        rules:
+          - alert: TargetDown
+            expr: up == 0
+            for: 10m
+            labels: {severity: warning}
+            annotations:
+              summary: "Scrape target {{ $labels.job }} / {{ $labels.instance }} is down"
 prometheus-pushgateway:
   enabled: false
