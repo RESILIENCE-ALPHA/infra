@@ -1,9 +1,10 @@
 ---
+# Comments: no quotes or apostrophes (ufw passes them through a shell-like parser).
 # Public ports, the same list as the IONOS firewall policy (the outer layer, edited in the IONOS
 # panel). NodePorts and k3s ServiceLB bypass ufw: the IONOS policy is what filters those.
 firewall_public_rules:
-  - {port: "22", proto: tcp, comment: "ssh (fallback when Tailscale is down; keys only)"}
-  - {port: "80", proto: tcp, comment: "apisix http + Let's Encrypt HTTP-01"}
+  - {port: "22", proto: tcp, comment: "ssh fallback, keys only"}
+  - {port: "80", proto: tcp, comment: "apisix http + letsencrypt http-01"}
   - {port: "443", proto: tcp, comment: "apisix https"}
   - {port: "41641", proto: udp, comment: "tailscale direct connections"}
 
