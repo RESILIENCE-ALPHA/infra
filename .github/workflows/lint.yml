@@ -5,6 +5,7 @@ on:
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch:          # Actions tab -> lint -> Run workflow
 
 permissions:
   contents: read
