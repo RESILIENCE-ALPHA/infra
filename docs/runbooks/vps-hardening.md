@@ -5,7 +5,7 @@ Two layers, same public list:
 | Layer | Where | Public | Managed by |
 | --- | --- | --- | --- |
 | IONOS firewall policy | in front of the VPS | TCP 22, 80, 443 · UDP 41641 | IONOS panel (no Terraform provider for the classic VPS) |
-| ufw | on the VPS | same list; everything on `tailscale0`; k3s 10.42/16 and 10.43/16 | Ansible role `firewall` |
+| ufw | on the VPS | same list; everything on `tailscale0`; k3s 10.42/16 and 10.43/16; **routed** traffic of the pod network 10.42/16 | Ansible role `firewall` |
 
 NodePorts and k3s ServiceLB bypass ufw (DNAT before ufw's rules), so the IONOS policy is the layer
 that really filters them. Only `apisix-gateway` (80/443) is exposed today.
@@ -67,6 +67,13 @@ for p in 22 80 443 6443 10250 9100; do printf '%-6s ' $p; nc -z -G 3 85.215.234.
 
 From the dev container: `kubectl get nodes` (both Ready), the sites (`curl` app/auth/payment), and a
 new SSH session over Tailscale.
+
+## Incident 2026-11-13: pod network cut after the reboot
+
+After the VPS reboot, ufw's chains load before flannel's FORWARD rule, and ufw's "deny (routed)"
+dropped pod traffic from the VPS to apps-node (`[UFW BLOCK] IN=cni0 OUT=flannel.1`). All three
+backups hung until their deadline. Fixed by `ufw route allow from/to 10.42.0.0/16` (role `firewall`).
+Test: a pod on the VPS must reach `http://rustfs.backup.svc.cluster.local:9000/health`.
 
 ## Rollback
 

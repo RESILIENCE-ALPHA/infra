@@ -33,6 +33,22 @@
     comment: "k3s"
   loop: "{{ firewall_trusted_networks }}"
 
+- name: Allow routed traffic from the pod network
+  community.general.ufw:
+    rule: allow
+    route: true
+    from_ip: "{{ item }}"
+    comment: "k3s pod network"
+  loop: "{{ firewall_routed_networks }}"
+
+- name: Allow routed traffic to the pod network
+  community.general.ufw:
+    rule: allow
+    route: true
+    to_ip: "{{ item }}"
+    comment: "k3s pod network"
+  loop: "{{ firewall_routed_networks }}"
+
 - name: Remove stale rules
   community.general.ufw:
     rule: allow
