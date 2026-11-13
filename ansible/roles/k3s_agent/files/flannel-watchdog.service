@@ -1,0 +1,8 @@
+# Managed by Ansible (roles/k3s_agent).
+[Unit]
+Description=Restart k3s-agent if the flannel tunnel (flannel.1) is missing
+After=k3s-agent.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/flannel-watchdog

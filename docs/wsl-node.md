@@ -55,3 +55,14 @@ Then reboot the laptop without opening anything: `apps-node` is `Ready` again wi
 A sleeping laptop pauses WSL and the node goes `NotReady`; root then waits on apps with a pod on it
 (node-exporter, Promtail, Falco). Settings → System → Power: sleep **Never** when plugged in;
 Control Panel → Power Options → closing the lid: **Do nothing** when plugged in.
+
+## Flannel tunnel watchdog
+
+After a WSL boot on 2026-11-12, flannel never created `flannel.1` ("external interface not found,
+retrying in 30s" in `journalctl -u k3s-agent`): the node stayed Ready, but its pods could not reach
+the VPS, and the nightly backups to RustFS hung. `sudo systemctl restart k3s-agent` fixed it.
+
+The `k3s_agent` role now installs `flannel-watchdog.timer`: every 2 minutes, if `cni0` exists and
+`flannel.1` does not (3 minutes after k3s-agent started), it restarts k3s-agent and logs it
+(`journalctl -t flannel-watchdog`). The `FlannelTunnelMissing` alert reports it on Discord if it
+lasts more than 10 minutes.
