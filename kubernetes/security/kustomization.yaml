@@ -8,3 +8,4 @@ resources:
   - vault-backend.yaml
   - vault-httproute.yaml
   - vault-backup.yaml
+  - vault-unsealer.yaml

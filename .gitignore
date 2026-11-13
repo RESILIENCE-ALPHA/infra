@@ -17,6 +17,9 @@ override.tf.json
 vault-init.json
 vault-keys*
 *unseal*
+# ...except these two, which hold no key (the keys are in a hand-made Secret):
+!kubernetes/security/vault-unsealer.yaml
+!docs/runbooks/vault-auto-unseal.md
 *.token
 .env
 .env.*

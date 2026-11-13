@@ -1,0 +1,95 @@
+# Vault auto-unseal (Phase 5.5b): every 30 s, if vault-0 is sealed, unseal it with 3 of the
+# Shamir keys. The keys are in the Secret vault-unseal-keys, created BY HAND (not in Git, not in
+# Vault): docs/runbooks/vault-auto-unseal.md. Kubernetes Secrets are encrypted at rest (5.5a).
+# The VaultNotReady alert (Discord) stays as the safety net.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vault-unsealer-script
+  namespace: security
+data:
+  unseal.sh: |
+    #!/bin/sh
+    # vault status exit codes: 0 = unsealed, 2 = sealed, 1 = error (unreachable...).
+    set -u
+    echo "watching $VAULT_ADDR every ${INTERVAL}s"
+    while :; do
+      vault status >/dev/null 2>&1
+      rc=$?
+      if [ "$rc" -eq 2 ]; then
+        echo "$(date -u +%FT%TZ) sealed: unsealing"
+        for k in key1 key2 key3; do
+          vault operator unseal "$(cat "/keys/$k")" >/dev/null 2>&1 || echo "unseal with $k failed"
+        done
+        if vault status >/dev/null 2>&1; then echo "$(date -u +%FT%TZ) unsealed"; else echo "$(date -u +%FT%TZ) still sealed"; fi
+      elif [ "$rc" -ne 0 ]; then
+        echo "$(date -u +%FT%TZ) vault unreachable (rc=$rc)"
+      fi
+      sleep "$INTERVAL"
+    done
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vault-unsealer
+  namespace: security
+  labels:
+    app: vault-unsealer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vault-unsealer
+  template:
+    metadata:
+      labels:
+        app: vault-unsealer
+    spec:
+      automountServiceAccountToken: false     # it never talks to the Kubernetes API
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: "true"
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 100
+        runAsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: unsealer
+          image: hashicorp/vault:1.20.4
+          command: ["/bin/sh", "/scripts/unseal.sh"]
+          env:
+            # Headless service with publishNotReadyAddresses: reaches vault-0 even while sealed
+            # (the regular "vault" service drops a sealed pod).
+            - name: VAULT_ADDR
+              value: http://vault-0.vault-internal.security.svc.cluster.local:8200
+            - name: INTERVAL
+              value: "30"
+            - name: HOME
+              value: /tmp
+          resources:
+            requests: {cpu: 5m, memory: 32Mi}
+            limits: {memory: 64Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+            - name: keys
+              mountPath: /keys
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: scripts
+          configMap:
+            name: vault-unsealer-script
+        - name: keys
+          secret:
+            secretName: vault-unseal-keys
+            defaultMode: 0400
+        - name: tmp
+          emptyDir: {}

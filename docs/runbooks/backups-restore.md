@@ -4,7 +4,7 @@
 | --- | --- | --- |
 | Backup storage | RustFS 1.0 in namespace `backup`, pinned to **apps-node** (the laptop) | Argo CD app `rustfs`; data on the laptop's WSL disk (`local-path`), never pruned |
 | Postgres backup | CronJob `applications/postgres-backup`, every night 02:30 Paris | `pg_dumpall` → gzip → `s3://backups/postgres/pg-<date>.sql.gz` on RustFS, kept **90 days** |
-| k3s datastore | CronJob `backup/k3s-backup`, 02:45, on the VPS | SQLite online backup of `state.db` + integrity check + server token → `s3://backups/k3s/k3s-<date>.tar.gz`, 90 days |
+| k3s datastore | CronJob `backup/k3s-backup`, 02:45, on the VPS | SQLite online backup of `state.db` + integrity check (token and encryption config in the password manager, not in the archive) → `s3://backups/k3s/k3s-<date>.tar.gz`, 90 days |
 | Vault | CronJob `security/vault-backup`, 03:00, next to `vault-0` | `tar.gz` of the file storage (read-only mount) → `s3://backups/vault/vault-<date>.tar.gz`, 90 days |
 | Keys | Vault `apps/backup`: `rustfs_access_key`, `rustfs_secret_key` | ExternalSecret `backup-target` in `applications`, `backup`, `security` |
 
@@ -127,8 +127,8 @@ container directly on that folder to read the objects.
 
 ## k3s datastore and Vault backups (5.1b)
 
-The k3s archive holds the server token and every Kubernetes object, Secrets included, **in clear**:
-anyone who can read it can take over the cluster. Vault's archive is encrypted by Vault itself and
+Since 5.5a the Secrets in the k3s archive are encrypted, and the archive no longer holds the server
+token: the token and the encryption config are in the password manager (needed to restore). Vault's archive is encrypted by Vault itself and
 useless without the unseal keys.
 
 Pre-checks, before merging:
