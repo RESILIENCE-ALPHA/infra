@@ -17,6 +17,12 @@ firewall_trusted_networks:
   - 10.42.0.0/16
   - 10.43.0.0/16
 
+# Routed (forwarded) traffic of the pod network: pod-to-pod across nodes goes cni0 -> flannel.1.
+# ufw's "deny (routed)" default runs before flannel's own FORWARD rules (after a reboot ufw loads
+# first), so without these the VPS pods cannot reach pods on apps-node (RustFS: backups hung).
+firewall_routed_networks:
+  - 10.42.0.0/16
+
 # Rules from before this role, removed if present (port + proto as ufw shows them).
 firewall_stale_rules:
   - {port: "9000", proto: tcp}
