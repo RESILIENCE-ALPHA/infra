@@ -73,6 +73,15 @@ serverFiles:
             annotations:
               summary: "Disk / on {{ $labels.instance }} has less than 15% free"
               description: "{{ $value | humanizePercentage }} free on / ({{ $labels.instance }})."
+          - alert: FlannelTunnelMissing
+            expr: node_network_info{device="cni0"} unless on (instance) node_network_info{device="flannel.1"}
+            for: 10m
+            labels: {severity: critical}
+            annotations:
+              summary: "{{ $labels.instance }} has no flannel.1: its pods cannot reach other nodes"
+              description: >-
+                The node is Ready but the pod network tunnel is gone (backups to RustFS hang).
+                flannel-watchdog should restart k3s-agent; if not: sudo systemctl restart k3s-agent.
       - name: workloads
         rules:
           - alert: KubeDeploymentUnavailable

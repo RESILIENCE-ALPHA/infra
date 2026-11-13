@@ -1,0 +1,10 @@
+# Managed by Ansible (roles/k3s_agent).
+[Unit]
+Description=Check the flannel tunnel every 2 minutes
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=2min
+
+[Install]
+WantedBy=timers.target

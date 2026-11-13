@@ -109,3 +109,30 @@
   retries: 18
   delay: 10
   changed_when: false
+
+- name: Install the flannel tunnel watchdog
+  ansible.builtin.copy:
+    src: flannel-watchdog.sh
+    dest: /usr/local/sbin/flannel-watchdog
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Install the flannel watchdog service and timer
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "/etc/systemd/system/{{ item }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - flannel-watchdog.service
+    - flannel-watchdog.timer
+  register: k3s_agent_watchdog_units
+
+- name: Enable the flannel watchdog timer
+  ansible.builtin.systemd_service:
+    name: flannel-watchdog.timer
+    enabled: true
+    state: started
+    daemon_reload: "{{ k3s_agent_watchdog_units is changed }}"

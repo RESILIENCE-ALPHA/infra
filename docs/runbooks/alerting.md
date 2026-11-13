@@ -3,11 +3,11 @@
 | Piece | Where |
 | --- | --- |
 | Alertmanager | `prometheus` app (chart prometheus 29.38.0, subchart alertmanager), StatefulSet `admin/prometheus-alertmanager`, on the VPS |
-| Rules | `kubernetes/logging/prometheus-values.yml`, `serverFiles.alerting_rules.yml` (12 rules) |
+| Rules | `kubernetes/logging/prometheus-values.yml`, `serverFiles.alerting_rules.yml` (13 rules) |
 | Discord webhook | Vault `apps/alerting` (`discord_webhook`) → ExternalSecret `admin/alertmanager-discord` → file `/etc/alertmanager/discord/webhook-url` |
 | Argo CD metrics | `gitops/argocd/values.yaml`: `controller.metrics` with `prometheus.io/scrape` annotations |
 
-Rules: NodeNotReady, NodeDiskAlmostFull, KubeDeploymentUnavailable, KubePodCrashLooping,
+Rules: NodeNotReady, NodeDiskAlmostFull, FlannelTunnelMissing, KubeDeploymentUnavailable, KubePodCrashLooping,
 VaultNotReady, BackupTooOld (>26 h), BackupJobFailed, CertificateExpiringSoon (<14 d),
 CertificateNotReady, ArgoCDAppUnhealthy, ArgoCDAppOutOfSync (30 min), TargetDown.
 Grouped by alert and namespace, repeated every 12 h while firing, "resolved" message when it clears.
@@ -47,7 +47,7 @@ q() { curl -s "http://localhost:9090/api/v1/query" --data-urlencode "query=$1" |
 echo "argocd apps:   $(q 'argocd_app_info')"                                          # ~23
 echo "certificates:  $(q 'certmanager_certificate_expiration_timestamp_seconds')"     # > 0
 echo "backup crons:  $(q 'kube_cronjob_status_last_successful_time{cronjob=~".*-backup"}')"   # 3
-echo "rules loaded:  $(curl -s localhost:9090/api/v1/rules | jq '[.data.groups[].rules[]] | length')"   # 12
+echo "rules loaded:  $(curl -s localhost:9090/api/v1/rules | jq '[.data.groups[].rules[]] | length')"   # 13
 curl -s localhost:9090/api/v1/alerts | jq -r '.data.alerts[] | "\(.state)  \(.labels.alertname)  \(.labels.namespace // "")"'
 ```
 
