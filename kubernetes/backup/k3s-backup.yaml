@@ -1,10 +1,10 @@
-# Nightly backup of the k3s datastore (SQLite, /var/lib/rancher/k3s/server/db/state.db) and the
-# server token, from the control plane (the VPS) to RustFS: s3://backups/k3s/, kept 90 days.
+# Nightly backup of the k3s datastore (SQLite, /var/lib/rancher/k3s/server/db/state.db), from
+# the control plane (the VPS) to RustFS: s3://backups/k3s/, kept 90 days.
 # Restore: docs/runbooks/backups-restore.md ("k3s datastore").
 #
-# Not encrypted: the archive holds the server token and every Kubernetes object, Secrets
-# included. Anyone who can read it can take over the cluster. Same accepted risk as the Postgres
-# dumps (decision of 2026-11-11).
+# Kubernetes Secrets are encrypted at rest (k3s secrets-encryption). The server token and the
+# encryption config are deliberately NOT in this archive: they are in the password manager, so a
+# copy of the archive alone does not reveal the Secrets.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -13,7 +13,7 @@ metadata:
 data:
   backup.sh: |
     #!/bin/sh
-    # sqlite online backup -> integrity check -> tar.gz with the token -> upload -> verify -> prune.
+    # sqlite online backup -> integrity check -> tar.gz -> upload -> verify -> prune.
     set -eu
     apk add --no-cache sqlite rclone >/dev/null
     export RCLONE_CONFIG=/dev/null
@@ -28,10 +28,9 @@ data:
     sqlite3 /k3s-db/state.db ".backup '$snap/state.db'"
     check=$(sqlite3 "$snap/state.db" "PRAGMA integrity_check;")
     [ "$check" = "ok" ] || { echo "integrity check failed: $check"; exit 1; }
-    cp /k3s-token "$snap/token"
     echo "datastore: $(du -h "$snap/state.db" | cut -f1), $(sqlite3 "$snap/state.db" 'select count(*) from kine;') kine rows"
 
-    tar czf "$out" -C "$snap" state.db token
+    tar czf "$out" -C "$snap" state.db
     rm -rf "$snap"
 
     rclone mkdir -q "rustfs:$BUCKET"
@@ -102,9 +101,6 @@ spec:
                 # reading; the script never writes to it.
                 - name: k3s-db
                   mountPath: /k3s-db
-                - name: k3s-token
-                  mountPath: /k3s-token
-                  readOnly: true
           volumes:
             - name: scripts
               configMap:
@@ -116,7 +112,3 @@ spec:
               hostPath:
                 path: /var/lib/rancher/k3s/server/db
                 type: Directory
-            - name: k3s-token
-              hostPath:
-                path: /var/lib/rancher/k3s/server/token
-                type: File

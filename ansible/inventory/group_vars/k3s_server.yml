@@ -4,4 +4,8 @@
 k3s_server_config:
   disable:
     - traefik           # APISIX is the gateway
+  # Kubernetes Secrets encrypted at rest in the datastore (aescbc). Key file:
+  # /var/lib/rancher/k3s/server/cred/encryption-config.json, kept in the password manager,
+  # never in the backups. Enabled with docs/runbooks/vault-auto-unseal.md (5.5a).
+  secrets-encryption: true
   write-kubeconfig-mode: "0644"   # kept from the previous install script; tighten to 0600 once nothing reads it as non-root

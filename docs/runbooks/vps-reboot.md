@@ -42,6 +42,9 @@ kubectl -n security get pod vault-0                 # Running, READY 0/1 = seale
 
 ## 3. Unseal Vault · dev container
 
+Since Phase 5.5 the `vault-unsealer` Deployment does this by itself within ~30 s:
+`kubectl -n security logs deploy/vault-unsealer`. Do it by hand only if it did not.
+
 Run 3 times, entering a different unseal key each time (the prompt hides it, nothing is logged):
 
 ```bash

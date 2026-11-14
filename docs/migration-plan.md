@@ -119,8 +119,12 @@ Progress:
 - [x] 5.3 VPS firewall and SSH: IONOS policy reduced to TCP 22/80/443 + UDP 41641 (done by hand);
       ufw (role `firewall`) aligned; SSH keys only + fail2ban (role `ssh_hardening`),
       playbook `playbooks/hardening.yml` (docs/runbooks/vps-hardening.md).
-- [ ] 5.4 Alerting: Alertmanager (prometheus chart) to Discord, 12 rules (nodes, disk, workloads,
+- [x] 5.2 VPS reboot / kernel 6.8.0-147: happened on 2026-11-12 (cluster recovered, Vault unsealed by hand).
+- [x] 5.4 Alerting: Alertmanager (prometheus chart) to Discord, 12 rules (nodes, disk, workloads,
       Vault, backups, certificates, Argo CD, targets); Argo CD metrics scraped (docs/runbooks/alerting.md).
+- [ ] 5.5 Vault auto-unseal: k3s Secrets encryption at rest (5.5a) + vault-unsealer Deployment with
+      the keys in a hand-made Secret (5.5b); token and encryption config out of the k3s backup
+      (docs/runbooks/vault-auto-unseal.md).
 
 - Tailscale ACLs: `tag:ci` and admins can SSH to `tag:k3s` nodes, nodes talk to each other.
 - kubeconfig mode `0600`, dedicated CI service account instead of the admin kubeconfig.

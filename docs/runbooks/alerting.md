@@ -58,7 +58,7 @@ real findings: fix or tune them in a PR.
 
 ```bash
 kubectl -n admin exec statefulset/prometheus-alertmanager -c alertmanager -- \
-  amtool alert add TestAlert severity=warning --annotation=summary="Test from Alertmanager" \
+  amtool alert add TestAlert severity=warning --annotation='summary="Test from Alertmanager"' \
   --alertmanager.url=http://localhost:9093
 ```
 

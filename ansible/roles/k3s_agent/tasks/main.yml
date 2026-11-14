@@ -136,3 +136,5 @@
     enabled: true
     state: started
     daemon_reload: "{{ k3s_agent_watchdog_units is changed }}"
+  # In --check the unit files are not written yet, so there is nothing to enable.
+  when: not (ansible_check_mode and k3s_agent_watchdog_units is changed)
