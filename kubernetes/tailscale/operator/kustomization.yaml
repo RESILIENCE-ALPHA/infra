@@ -1,0 +1,5 @@
+# OAuth credentials of the Tailscale operator (synced with the operator chart, gitops/apps/tailscale-operator.yaml).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - operator-oauth-externalsecret.yaml
