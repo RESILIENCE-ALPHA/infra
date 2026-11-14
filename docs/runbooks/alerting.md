@@ -25,7 +25,7 @@ never in a chat, a ticket or Git.
 ```bash
 read -rs HOOK                                   # paste the URL, Enter (nothing is shown)
 case "$HOOK" in https://discord.com/api/webhooks/*) echo "format OK" ;; *) echo "STOP: not a Discord webhook URL" ;; esac
-kubectl -n security exec -it vault-0 -- sh -c "vault login && vault kv put -mount=apps alerting discord_webhook=$HOOK"
+kubectl -n security exec -it vault-0 -- sh -c "vault login -no-print && vault kv put -mount=apps alerting discord_webhook=$HOOK"
 unset HOOK
 ```
 

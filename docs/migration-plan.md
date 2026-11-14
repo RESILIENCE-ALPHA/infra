@@ -125,9 +125,12 @@ Progress:
 - [x] 5.5 Vault auto-unseal: k3s Secrets encryption at rest (5.5a) + vault-unsealer Deployment with
       the keys in a hand-made Secret (5.5b); token and encryption config out of the k3s backup
       (docs/runbooks/vault-auto-unseal.md).
-- [ ] 5.6 Admin tools on the tailnet only: Tailscale operator (Argo CD app), one `tailscale` Ingress
+- [ ] 5.5c External Secrets → Vault with Kubernetes auth (no static token); the root token it used
+      leaked on 2026-11-14 and was revoked (docs/runbooks/eso-kubernetes-auth.md).
+- [x] 5.6 Admin tools on the tailnet only (tested: open on the Mac, not from a phone off the
+      tailnet): Tailscale operator (Argo CD app), one `tailscale` Ingress
       per tool (Argo CD, Grafana, Headlamp, Jaeger, Vault, pgAdmin); public routes and DNS records
-      removed afterwards (docs/runbooks/tailnet-admin.md).
+      public routes and DNS records still to remove (docs/runbooks/tailnet-admin.md, step 6).
 
 - Tailscale ACLs: `tag:ci` and admins can SSH to `tag:k3s` nodes, nodes talk to each other.
 - kubeconfig mode `0600`, dedicated CI service account instead of the admin kubeconfig.

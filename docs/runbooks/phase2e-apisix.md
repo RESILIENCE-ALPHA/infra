@@ -36,8 +36,8 @@ public default). Log in with a token that can write `apps/apisix-admin`:
 
 ```bash
 kubectl -n security exec -it vault-0 -- sh -c \
-  'vault login && vault kv patch -mount=apps apisix-admin viewer=$(head -c16 /dev/urandom | od -An -tx1 | tr -d " \n")'
-kubectl -n security exec -it vault-0 -- sh -c 'vault login >/dev/null && vault kv get -mount=apps -format=json apisix-admin | grep -o "\"[a-z]*\":" | sort -u'
+  'vault login -no-print && vault kv patch -mount=apps apisix-admin viewer=$(head -c16 /dev/urandom | od -An -tx1 | tr -d " \n")'
+kubectl -n security exec -it vault-0 -- sh -c 'vault login -no-print && vault kv get -mount=apps -format=json apisix-admin | grep -o "\"[a-z]*\":" | sort -u'
 ```
 
 The second command must list `"key":` and `"viewer":` (names only, no values).
