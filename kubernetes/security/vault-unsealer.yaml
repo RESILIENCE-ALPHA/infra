@@ -52,6 +52,7 @@ spec:
         runAsNonRoot: true
         runAsUser: 100
         runAsGroup: 1000
+        fsGroup: 1000                 # key files group-owned by 1000, readable by the container user
         seccompProfile:
           type: RuntimeDefault
       containers:
@@ -90,6 +91,6 @@ spec:
         - name: keys
           secret:
             secretName: vault-unseal-keys
-            defaultMode: 0400
+            defaultMode: 0440           # owner root + group 1000 (fsGroup), nobody else
         - name: tmp
           emptyDir: {}
