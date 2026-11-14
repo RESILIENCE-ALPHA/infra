@@ -26,7 +26,7 @@ sudo apt-get update && sudo apt-get install -y rclone
 
 ```bash
 kubectl -n security exec -it vault-0 -- sh -c '
-  vault login &&
+  vault login -no-print &&
   vault kv put -mount=apps backup \
     rustfs_access_key=backup-$(head -c6 /dev/urandom | od -An -tx1 | tr -d " \n") \
     rustfs_secret_key=$(head -c24 /dev/urandom | od -An -tx1 | tr -d " \n")'

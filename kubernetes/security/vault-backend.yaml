@@ -1,3 +1,7 @@
+# External Secrets reads Vault (KV v2 mount "apps") with Kubernetes authentication: it presents a
+# short-lived token of its own service account (security/external-secrets), Vault checks it with the
+# Kubernetes TokenReview API and grants the policy external-secrets-read (read-only).
+# No static Vault token to store, rotate or leak. Setup: docs/runbooks/eso-kubernetes-auth.md.
 apiVersion: external-secrets.io/v1
 kind: ClusterSecretStore
 metadata:
@@ -9,7 +13,9 @@ spec:
       path: "apps"
       version: "v2"
       auth:
-        tokenSecretRef:
-          name: vault-token
-          namespace: security
-          key: token
+        kubernetes:
+          mountPath: kubernetes
+          role: external-secrets
+          serviceAccountRef:
+            name: external-secrets
+            namespace: security

@@ -46,7 +46,7 @@ Each Ingress becomes its own tailnet device with a TLS certificate issued throug
 read -rs TS_ID; echo "id read"
 read -rs TS_SECRET; echo "secret read"
 printf 'id length %s, secret starts with tskey-client: %s\n' "${#TS_ID}" "$(case $TS_SECRET in tskey-client-*) echo yes;; *) echo no;; esac)"
-kubectl -n security exec -it vault-0 -- sh -c "vault login && vault kv put -mount=apps tailscale oauth_client_id=$TS_ID oauth_client_secret=$TS_SECRET"
+kubectl -n security exec -it vault-0 -- sh -c "vault login -no-print && vault kv put -mount=apps tailscale oauth_client_id=$TS_ID oauth_client_secret=$TS_SECRET"
 unset TS_ID TS_SECRET
 ```
 
