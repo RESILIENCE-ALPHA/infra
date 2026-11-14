@@ -54,6 +54,21 @@ for es in $(kubectl get externalsecret -A -o jsonpath='{range .items[*]}{.metada
 sleep 20; kubectl get externalsecret -A | grep -v SecretSynced || echo "all SecretSynced"
 ```
 
+Then check which auth the live store really uses:
+
+```bash
+kubectl get clustersecretstore vault-backend -o jsonpath='{.spec.provider.vault.auth}{"\n"}'
+```
+
+If `tokenSecretRef` is still there next to `kubernetes` (it was on 2026-11-14: the field had been
+written by an old `kubectl apply`, so Argo CD's server-side apply could not remove it, and External
+Secrets uses `tokenSecretRef` first), remove it by hand and run the checks again:
+
+```bash
+kubectl patch clustersecretstore vault-backend --type=json \
+  -p='[{"op":"remove","path":"/spec/provider/vault/auth/tokenSecretRef"}]'
+```
+
 ## 3. Remove the static token
 
 Only once step 2 shows `all SecretSynced`:
@@ -66,3 +81,6 @@ unset ROOT
 ```
 
 Check once more that every ExternalSecret still syncs (the loop of step 2).
+
+Done on 2026-11-14: store `Valid`, all ExternalSecrets synced with Kubernetes auth, static token
+revoked and Secret `vault-token` deleted. No Vault token is stored in the cluster anymore.
