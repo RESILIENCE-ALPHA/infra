@@ -57,3 +57,11 @@ metadata:
   name: backup
   annotations:
     argocd.argoproj.io/sync-options: Prune=false,Delete=false
+---
+# Tailscale Kubernetes operator and its proxies (admin tools reachable over the tailnet only).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tailscale
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false

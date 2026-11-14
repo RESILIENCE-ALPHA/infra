@@ -1,0 +1,11 @@
+# Default ProxyClass (operator value proxyConfig.defaultProxyClass): the tailnet proxies run on the
+# VPS, next to the services they front, never on the laptop.
+apiVersion: tailscale.com/v1alpha1
+kind: ProxyClass
+metadata:
+  name: vps
+spec:
+  statefulSet:
+    pod:
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: "true"

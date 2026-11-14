@@ -45,6 +45,10 @@ alertmanager:
         discord_configs:
           - webhook_url_file: /etc/alertmanager/discord/webhook-url
             send_resolved: true
+            # Short title (the default lists every label and gets truncated at 256 characters).
+            title: >-
+              [{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}]
+              {{ .CommonLabels.alertname }}{{ with .CommonLabels.namespace }} ({{ . }}){{ end }}
     inhibit_rules:
       # A node that is down explains the targets and pods failing on it: send only the node alert.
       - source_matchers: [alertname="NodeNotReady"]

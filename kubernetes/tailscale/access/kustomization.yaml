@@ -1,0 +1,6 @@
+# Tailnet-only access to the admin tools (gitops/apps/tailnet-admin.yaml), after the operator.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - proxyclass.yaml
+  - admin-ingresses.yaml
