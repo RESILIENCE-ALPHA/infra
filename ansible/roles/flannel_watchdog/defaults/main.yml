@@ -1,0 +1,3 @@
+---
+# The k3s systemd service to restart: k3s on the server, k3s-agent on agents.
+flannel_watchdog_service: k3s-agent

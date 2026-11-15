@@ -62,7 +62,10 @@ After a WSL boot on 2026-11-12, flannel never created `flannel.1` ("external int
 retrying in 30s" in `journalctl -u k3s-agent`): the node stayed Ready, but its pods could not reach
 the VPS, and the nightly backups to RustFS hung. `sudo systemctl restart k3s-agent` fixed it.
 
-The `k3s_agent` role now installs `flannel-watchdog.timer`: every 2 minutes, if `cni0` exists and
-`flannel.1` does not (3 minutes after k3s-agent started), it restarts k3s-agent and logs it
+The `flannel_watchdog` role (both nodes since 2026-11-15) installs `flannel-watchdog.timer`: every 2 minutes, if `cni0` exists and
+`flannel.1` does not (3 minutes after k3s-agent started), it restarts the k3s service (k3s-agent here, k3s on the VPS) and logs it
 (`journalctl -t flannel-watchdog`). The `FlannelTunnelMissing` alert reports it on Discord if it
 lasts more than 10 minutes.
+
+On 2026-11-14 the VPS lost its `flannel.1` too (at 06:51 UTC, while k3s kept running, right after
+a `vault-0` pod deletion), and the backups failed for a night. The watchdog now runs on the VPS as well.
