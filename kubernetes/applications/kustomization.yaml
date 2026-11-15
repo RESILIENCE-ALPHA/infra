@@ -10,3 +10,4 @@ resources:
   - swagger-basic-auth.yaml
   - front.yaml
   - pgadmin.yaml
+  - network-policies.yaml
