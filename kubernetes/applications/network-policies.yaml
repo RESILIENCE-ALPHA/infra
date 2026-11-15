@@ -1,0 +1,96 @@
+# NetworkPolicies of the applications namespace (Phase 5.7), enforced by k3s's built-in kube-router.
+# Incoming traffic is denied by default; each policy below allows one flow. Outgoing traffic is not
+# restricted yet (DNS, Jaeger, Vault...). Traffic from the node itself (kubelet probes) stays allowed.
+# Runbook (checks and rollback): docs/runbooks/network-policies.md.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: applications
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]
+---
+# Browser -> APISIX -> front (app.), auth (auth.), payment (payment.).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-gateway-to-web
+  namespace: applications
+spec:
+  podSelector:
+    matchExpressions:
+      - {key: app, operator: In, values: [epsi-pay-front, epsi-pay-auth, epsi-pay-payment]}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels: {kubernetes.io/metadata.name: apisix}
+          podSelector:
+            matchLabels: {app.kubernetes.io/name: apisix}
+      ports:
+        - {protocol: TCP, port: 8080}
+        - {protocol: TCP, port: 3000}
+---
+# The front's nginx may proxy API calls to auth and payment.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-front-to-api
+  namespace: applications
+spec:
+  podSelector:
+    matchExpressions:
+      - {key: app, operator: In, values: [epsi-pay-auth, epsi-pay-payment]}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels: {app: epsi-pay-front}
+      ports:
+        - {protocol: TCP, port: 3000}
+---
+# Postgres: only its clients. service-ia (namespace ia, not Ollama) reads it for attack detection.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-postgres-clients
+  namespace: applications
+spec:
+  podSelector:
+    matchLabels: {app: postgres}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values: [epsi-pay-auth, epsi-pay-payment, pgadmin, postgres-backup, epsi-pay-database]
+        - namespaceSelector:
+            matchLabels: {kubernetes.io/metadata.name: ia}
+          podSelector:
+            matchLabels: {app: service-ia}
+      ports:
+        - {protocol: TCP, port: 5432}
+---
+# pgAdmin: from APISIX (public route, removed in 5.6 step 6) and from its Tailscale proxy.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-pgadmin-ui
+  namespace: applications
+spec:
+  podSelector:
+    matchLabels: {app: pgadmin}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels: {kubernetes.io/metadata.name: apisix}
+          podSelector:
+            matchLabels: {app.kubernetes.io/name: apisix}
+        - namespaceSelector:
+            matchLabels: {kubernetes.io/metadata.name: tailscale}
+      ports:
+        - {protocol: TCP, port: 80}
