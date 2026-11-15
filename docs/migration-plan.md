@@ -129,8 +129,8 @@ Progress:
       leaked on 2026-11-14 and was revoked (docs/runbooks/eso-kubernetes-auth.md).
 - [x] 5.6 Admin tools on the tailnet only (tested: open on the Mac, not from a phone off the
       tailnet): Tailscale operator (Argo CD app), one `tailscale` Ingress
-      per tool (Argo CD, Grafana, Headlamp, Jaeger, Vault, pgAdmin); public routes and DNS records
-      still to remove (docs/runbooks/tailnet-admin.md, step 6).
+      per tool (Argo CD, Grafana, Headlamp, Jaeger, Vault, pgAdmin); public routes, certificates and
+      DNS records removed (docs/runbooks/tailnet-admin.md, step 6).
 - [x] 5.7a NetworkPolicies in `applications`: default-deny ingress, then gateway -> web,
       front -> api, clients -> postgres (incl. service-ia), gateway/tailnet -> pgadmin
       (docs/runbooks/network-policies.md). Tested 2026-11-15: payment, pgAdmin, backup job,

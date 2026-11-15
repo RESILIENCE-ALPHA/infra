@@ -1,14 +1,14 @@
 # Argo CD, chart argo/argo-cd 10.10.5 (Argo CD v3.5.5), installed by ansible/playbooks/argocd.yml.
 # Single-node-sized: no HA, no Dex (local admin only for now), no notifications controller.
 global:
-  domain: argocd.karim-portfolio.xyz
+  domain: argocd.taild095e0.ts.net   # tailnet only (kubernetes/tailscale/access)
   # Keep Argo CD on the control plane (apps-node is tainted anyway, this makes it explicit).
   nodeSelector:
     node-role.kubernetes.io/control-plane: "true"
 
 configs:
   params:
-    # TLS will end at the APISIX gateway once argocd.karim-portfolio.xyz gets a route.
+    # TLS ends at the Tailscale proxy (tailnet Ingress); argocd-server speaks plain HTTP behind it.
     server.insecure: true
     # Diff against a server-side dry-run apply, so defaults that the API server or a CRD
     # adds (ExternalSecret remoteRef fields, HTTPRoute group/kind...) never show as drift.

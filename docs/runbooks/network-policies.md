@@ -7,7 +7,7 @@ Enforced by k3s's built-in kube-router. Ingress only for now: default deny, then
 | front | APISIX gateway pods (`apisix` namespace) | 8080 |
 | auth, payment | APISIX gateway pods; front | 3000 |
 | postgres | auth, payment, pgadmin, postgres-backup, epsi-pay-database (seed); `service-ia` in `ia` | 5432 |
-| pgadmin | APISIX gateway pods; Tailscale proxy (`tailscale` namespace) | 80 |
+| pgadmin | Tailscale proxy (`tailscale` namespace) only | 80 |
 
 Not restricted yet: egress (DNS, Jaeger, Vault, internet), other namespaces.
 

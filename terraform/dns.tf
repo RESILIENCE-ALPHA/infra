@@ -4,19 +4,14 @@ locals {
   domain  = "karim-portfolio.xyz"
   vps_ip  = "85.215.234.70" # IONOS VPS, k3s control plane, APISIX on ports 80/443
 
-  # A records to the VPS. proxied = false: APISIX terminates TLS with Let's Encrypt certificates
+  # A records to the VPS (public services only: the admin tools are on the tailnet, not in DNS).
+  # proxied = false: APISIX terminates TLS with Let's Encrypt certificates
   # (cert-manager, HTTP-01 challenge through the Gateway).
   a_records = {
-    "app"      = { proxied = false }
-    "auth"     = { proxied = false }
-    "payment"  = { proxied = false }
-    "pgadmin"  = { proxied = false }
-    "argocd"   = { proxied = false }
-    "grafana"  = { proxied = false }
-    "headlamp" = { proxied = false }
-    "jaeger"   = { proxied = false }
-    "vault-ui" = { proxied = false }
-    "docs"     = { proxied = false } # old docs site (kube-docs), to be rebuilt
+    "app"     = { proxied = false }
+    "auth"    = { proxied = false }
+    "payment" = { proxied = false }
+    "docs"    = { proxied = false } # old docs site (kube-docs), to be rebuilt
     # Proxied through Cloudflare (orange cloud). Kept as they were; to review in a later PR.
     "@"         = { proxied = true }
     "api"       = { proxied = true }

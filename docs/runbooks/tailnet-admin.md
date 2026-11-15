@@ -77,3 +77,28 @@ For argocd, grafana, headlamp, jaeger, vault-ui, pgadmin: delete their HTTPRoute
 listener and Certificate, and their Cloudflare record in `terraform/dns.tf` (Terraform PR: the plan
 must show only those 6 records destroyed). Then check from outside that the six hosts no longer
 answer, and that `app`, `auth`, `payment` still do.
+
+What the PR also changes:
+
+- The Jaeger basic-auth setup (`jaeger-ui.yaml`: ExternalSecret, APISIX Consumer, PluginConfig) goes:
+  it only protected the public route. On the tailnet, Jaeger is reachable by tailnet members only.
+- The `allow-pgadmin-ui` NetworkPolicy no longer lets APISIX in: only the Tailscale proxy.
+- Argo CD's `global.domain` becomes `argocd.taild095e0.ts.net`.
+
+After the merge (💻 dev container):
+
+```bash
+# 1. Argo CD's own app never prunes (prune: false): delete its old route by hand
+kubectl -n argocd delete httproute argocd-route
+# 2. cert-manager keeps the Secret when a Certificate is deleted
+kubectl -n apisix delete secret grafana-tls pgadmin-tls vault-tls headlamp-tls jaeger-tls argocd-tls
+# 3. Nothing left on the gateway for the admin hosts
+kubectl get httproute -A
+kubectl -n apisix get gateway main-gateway -o jsonpath='{range .spec.listeners[*]}{.name}{"\n"}{end}'
+# 4. From outside: the six hosts no longer resolve, the public ones still answer
+for h in argocd grafana headlamp jaeger vault-ui pgadmin; do printf '%-9s ' $h; dig +short $h.karim-portfolio.xyz @1.1.1.1 | head -1; echo; done   # empty
+for h in app auth payment; do printf '%-8s ' $h; curl -s -o /dev/null -w '%{http_code}\n' https://$h.karim-portfolio.xyz; done                       # 200 404 404
+```
+
+Optional: the Vault secret `apps/jaeger-basic-auth` is no longer read by anything; delete it with
+`vault kv metadata delete apps/jaeger-basic-auth` once you are sure.
