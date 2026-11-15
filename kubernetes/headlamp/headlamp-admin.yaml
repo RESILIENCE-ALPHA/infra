@@ -1,6 +1,7 @@
 # Login identity for Headlamp: full rights (cluster-admin). Only ever hand out short-lived tokens.
 # Token: kubectl -n admin create token headlamp-admin --duration=1h
-# Revoke every token issued so far: kubectl -n admin delete sa headlamp-admin, then re-apply this file.
+# Revoke every token issued so far: kubectl -n admin delete sa headlamp-admin (Argo CD recreates it).
+# No long-lived token Secret on purpose.
 apiVersion: v1
 kind: ServiceAccount
 metadata:
