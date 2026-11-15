@@ -5,8 +5,6 @@ kind: Kustomization
 namespace: admin
 resources:
   - jaeger.yaml
-  - jaeger-ui.yaml
-  - grafana-httproute.yaml
   - grafana-externalsecret.yaml
   - alertmanager-discord-externalsecret.yaml
 configMapGenerator:

@@ -1,5 +1,5 @@
 # Security platform manifests (kubernetes/security/kustomization.yaml): Let's Encrypt
-# ClusterIssuers, the Vault ClusterSecretStore, the Vault UI route.
+# ClusterIssuers, the Vault ClusterSecretStore, Vault backup and unsealer.
 # Wave -1: after cert-manager, External Secrets and Vault; before anything using ExternalSecrets.
 apiVersion: argoproj.io/v1alpha1
 kind: Application

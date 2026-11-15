@@ -1,35 +1,6 @@
-# TLS certificates for the gateway listeners (secrets live in the gateway's namespace).
+# TLS certificates for the public gateway listeners (secrets live in the gateway's namespace).
 # All certificates are issued by the production Let's Encrypt ClusterIssuer (letsencrypt-prod).
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: grafana-tls
-  namespace: apisix
-spec:
-  secretName: grafana-tls
-  dnsNames: [grafana.karim-portfolio.xyz]
-  issuerRef: {name: letsencrypt-prod, kind: ClusterIssuer}
----
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: pgadmin-tls
-  namespace: apisix
-spec:
-  secretName: pgadmin-tls
-  dnsNames: [pgadmin.karim-portfolio.xyz]
-  issuerRef: {name: letsencrypt-prod, kind: ClusterIssuer}
----
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: vault-tls
-  namespace: apisix
-spec:
-  secretName: vault-tls
-  dnsNames: [vault-ui.karim-portfolio.xyz]
-  issuerRef: {name: letsencrypt-prod, kind: ClusterIssuer}
----
+# Admin tools have no public certificate: they are on the tailnet (kubernetes/tailscale/access).
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
@@ -58,34 +29,4 @@ metadata:
 spec:
   secretName: app-tls
   dnsNames: [app.karim-portfolio.xyz]
-  issuerRef: {name: letsencrypt-prod, kind: ClusterIssuer}
----
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: headlamp-tls
-  namespace: apisix
-spec:
-  secretName: headlamp-tls
-  dnsNames: [headlamp.karim-portfolio.xyz]
-  issuerRef: {name: letsencrypt-prod, kind: ClusterIssuer}
----
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: jaeger-tls
-  namespace: apisix
-spec:
-  secretName: jaeger-tls
-  dnsNames: [jaeger.karim-portfolio.xyz]
-  issuerRef: {name: letsencrypt-prod, kind: ClusterIssuer}
----
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: argocd-tls
-  namespace: apisix
-spec:
-  secretName: argocd-tls
-  dnsNames: [argocd.karim-portfolio.xyz]
   issuerRef: {name: letsencrypt-prod, kind: ClusterIssuer}

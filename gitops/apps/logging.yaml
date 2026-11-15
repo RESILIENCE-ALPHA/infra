@@ -1,5 +1,5 @@
 # Plain observability manifests in the admin namespace (kubernetes/logging/kustomization.yaml):
-# Jaeger, Jaeger UI route + basic auth, Grafana route, Grafana admin ExternalSecret,
+# Jaeger, Grafana admin ExternalSecret, Alertmanager Discord ExternalSecret,
 # Grafana dashboards (ConfigMaps generated from kubernetes/logging/dashboards/).
 apiVersion: argoproj.io/v1alpha1
 kind: Application

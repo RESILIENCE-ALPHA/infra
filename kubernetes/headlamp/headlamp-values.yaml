@@ -1,6 +1,6 @@
-# Headlamp (Kubernetes web UI), chart headlamp/headlamp 0.46.0, exposed at headlamp.karim-portfolio.xyz.
+# Headlamp (Kubernetes web UI), chart headlamp/headlamp 0.46.0, on the tailnet only (headlamp.taild095e0.ts.net).
 # Users log in with a ServiceAccount token (see headlamp-admin.yaml); the pod's own
-# ServiceAccount gets no cluster role, so the public UI never acts with more than the token's rights.
+# ServiceAccount gets no cluster role, so the UI never acts with more than the token's rights.
 config:
   inCluster: true
   unsafeUseServiceAccountToken: false
