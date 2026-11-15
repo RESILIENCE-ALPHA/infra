@@ -52,6 +52,15 @@ spec:
               valueFrom: {secretKeyRef: {name: postgres-epsi-pay-credentials, key: password}}
             - name: DATABASE_URL
               value: postgresql://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)
+            # Payment confirmation by passkey verifies the assertion itself, against the same RP ID
+            # and origin the credential was registered with in auth (see auth.yaml). Without these
+            # the service falls back to localhost and every signature is rejected.
+            - name: WEBAUTHN_RP_ID
+              value: app.karim-portfolio.xyz
+            - name: WEBAUTHN_RP_NAME
+              value: EPSI Pay
+            - name: WEBAUTHN_ORIGINS
+              value: https://app.karim-portfolio.xyz
             - name: NODE_OPTIONS
               value: --require /otel-auto-instrumentation/autoinstrumentation.js
             - name: OTEL_SERVICE_NAME
