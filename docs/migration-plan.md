@@ -130,10 +130,11 @@ Progress:
 - [x] 5.6 Admin tools on the tailnet only (tested: open on the Mac, not from a phone off the
       tailnet): Tailscale operator (Argo CD app), one `tailscale` Ingress
       per tool (Argo CD, Grafana, Headlamp, Jaeger, Vault, pgAdmin); public routes and DNS records
-      public routes and DNS records still to remove (docs/runbooks/tailnet-admin.md, step 6).
-- [ ] 5.7a NetworkPolicies in `applications`: default-deny ingress, then gateway -> web,
+      still to remove (docs/runbooks/tailnet-admin.md, step 6).
+- [x] 5.7a NetworkPolicies in `applications`: default-deny ingress, then gateway -> web,
       front -> api, clients -> postgres (incl. service-ia), gateway/tailnet -> pgadmin
-      (docs/runbooks/network-policies.md).
+      (docs/runbooks/network-policies.md). Tested 2026-11-15: payment, pgAdmin, backup job,
+      service-ia OK; a pod in `default` cannot reach postgres.
 
 - Tailscale ACLs: `tag:ci` and admins can SSH to `tag:k3s` nodes, nodes talk to each other.
 - kubeconfig mode `0600`, dedicated CI service account instead of the admin kubeconfig.
