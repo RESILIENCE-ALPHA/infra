@@ -1,0 +1,23 @@
+# Documentation site: guides (how it works, installation, teams, shipping a feature, operations)
+# and the interactive diagram (kubernetes/docs-site), running on admin-node.
+# Tailnet only: https://docs.taild095e0.ts.net (Ingress in the tailnet-admin app).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: docs-site
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/RESILIENCE-ALPHA/infra.git
+    targetRevision: main
+    path: kubernetes/docs-site
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: admin
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true

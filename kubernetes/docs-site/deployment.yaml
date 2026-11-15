@@ -1,0 +1,66 @@
+# docs-site: nginx serving the ConfigMap docs-site-content. Runs as non-root with a read-only root
+# filesystem, no service account token, all capabilities dropped (Pod Security "restricted").
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: docs-site
+  namespace: admin
+  labels:
+    app: docs-site
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: docs-site
+  template:
+    metadata:
+      labels:
+        app: docs-site
+    spec:
+      automountServiceAccountToken: false
+      # Admin tools run on admin-node (labelled and tainted node-role/admin=true by Ansible).
+      nodeSelector:
+        node-role/admin: "true"
+      tolerations:
+        - {key: node-role/admin, operator: Equal, value: "true", effect: NoSchedule}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
+        runAsGroup: 101
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: nginx
+          image: nginxinc/nginx-unprivileged:1.29.5-alpine
+          ports:
+            - {name: http, containerPort: 8080}
+          readinessProbe:
+            httpGet: {path: /healthz, port: http}
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: {path: /healthz, port: http}
+            initialDelaySeconds: 5
+            periodSeconds: 20
+          resources:
+            requests: {cpu: 5m, memory: 16Mi}
+            limits: {memory: 64Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - {name: site, mountPath: /usr/share/nginx/html, readOnly: true}
+            - {name: nginx-conf, mountPath: /etc/nginx/conf.d, readOnly: true}
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - name: site
+          configMap:
+            name: docs-site-content
+        - name: nginx-conf
+          configMap:
+            name: docs-site-nginx
+        - name: tmp
+          emptyDir:
+            sizeLimit: 16Mi

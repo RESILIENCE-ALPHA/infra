@@ -138,6 +138,15 @@ Progress:
 - [x] 5.4b Tempo replaces Jaeger (chart grafana-community/tempo 3.2.1, Tempo 3.1): same inputs (OTLP
       from auth/payment, Zipkin from APISIX), traces in Grafana, service graph through Prometheus
       remote write; Jaeger and its tailnet URL removed (docs/runbooks/tempo.md).
+- [x] 5.8a Third node `admin-node` (friend's server, Debian 13, joined with Ansible over the tailnet,
+      taint `node-role/admin=true:NoSchedule`); Headlamp, Grafana (data copied), Prometheus,
+      Alertmanager, kube-state-metrics, Loki and Tempo moved to it (2026-11-16).
+- [x] 6.2 Database migrations: versioned Prisma migrations in epsi_pay (baseline `0_init`),
+      `npm run migrate` as an Argo CD PreSync Job `epsi-pay-migrate` before every EPSI Pay sync.
+- [ ] 6.5a Documentation site (Argo CD app `docs-site` on admin-node, https://docs.taild095e0.ts.net,
+      tailnet only): the only documentation (the runbooks moved there): how it works, installation,
+      teams, shipping a feature, operations, and an interactive diagram with views (placement, teams,
+      networks, exposure, storage) and animated scenarios (kubernetes/docs-site).
 
 - Tailscale ACLs: `tag:ci` and admins can SSH to `tag:k3s` nodes, nodes talk to each other.
 - kubeconfig mode `0600`, dedicated CI service account instead of the admin kubeconfig.
