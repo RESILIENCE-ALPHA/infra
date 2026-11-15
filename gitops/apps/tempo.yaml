@@ -1,0 +1,30 @@
+# Grafana Tempo (traces), replaces Jaeger. Values: kubernetes/logging/tempo-values.yml.
+# Trace data on the StatefulSet's PVC (storage-tempo-0, local-path, 5Gi), kept 7 days.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: tempo
+  namespace: argocd
+spec:
+  project: default
+  sources:
+    - repoURL: https://grafana-community.github.io/helm-charts
+      chart: tempo
+      targetRevision: 3.2.1        # Tempo 3.1.1
+      helm:
+        releaseName: tempo
+        valueFiles:
+          - $values/kubernetes/logging/tempo-values.yml
+    - repoURL: https://github.com/RESILIENCE-ALPHA/infra.git
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: admin
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+      - CreateNamespace=true

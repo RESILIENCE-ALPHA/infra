@@ -1,6 +1,6 @@
 # NetworkPolicies of the applications namespace (Phase 5.7), enforced by k3s's built-in kube-router.
 # Incoming traffic is denied by default; each policy below allows one flow. Outgoing traffic is not
-# restricted yet (DNS, Jaeger, Vault...). Traffic from the node itself (kubelet probes) stays allowed.
+# restricted yet (DNS, Tempo, Vault...). Traffic from the node itself (kubelet probes) stays allowed.
 # Runbook (checks and rollback): docs/runbooks/network-policies.md.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy

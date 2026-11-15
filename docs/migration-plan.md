@@ -135,6 +135,9 @@ Progress:
       front -> api, clients -> postgres (incl. service-ia), gateway/tailnet -> pgadmin
       (docs/runbooks/network-policies.md). Tested 2026-11-15: payment, pgAdmin, backup job,
       service-ia OK; a pod in `default` cannot reach postgres.
+- [ ] 5.4b Tempo replaces Jaeger (chart grafana-community/tempo 3.2.1, Tempo 3.1): same inputs (OTLP
+      from auth/payment, Zipkin from APISIX), traces in Grafana, service graph through Prometheus
+      remote write; Jaeger and its tailnet URL removed (docs/runbooks/tempo.md).
 
 - Tailscale ACLs: `tag:ci` and admins can SSH to `tag:k3s` nodes, nodes talk to each other.
 - kubeconfig mode `0600`, dedicated CI service account instead of the admin kubeconfig.

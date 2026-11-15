@@ -1,6 +1,6 @@
 # Infra
 
-k3s cluster (control plane on the VPS, worker nodes joined over Tailscale) with namespaces: `argocd` (Argo CD), `admin` (Headlamp, Grafana, Prometheus, Loki, Promtail, Jaeger), `security` (Vault, External Secrets, cert-manager), `security-apps` (Falco), `apisix` (gateway), `applications` (Postgres, EPSI Pay), `ia` (Ollama). Everything is deployed by Argo CD from `gitops/apps`.
+k3s cluster (control plane on the VPS, worker nodes joined over Tailscale) with namespaces: `argocd` (Argo CD), `admin` (Headlamp, Grafana, Prometheus, Loki, Promtail, Tempo), `security` (Vault, External Secrets, cert-manager), `security-apps` (Falco), `apisix` (gateway), `applications` (Postgres, EPSI Pay), `ia` (Ollama). Everything is deployed by Argo CD from `gitops/apps`.
 
 ```
 terraform/                            Terraform: Cloudflare DNS of karim-portfolio.xyz, state in HCP Terraform

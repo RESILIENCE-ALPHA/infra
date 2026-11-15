@@ -13,7 +13,7 @@ Each Ingress becomes its own tailnet device with a TLS certificate issued throug
 | Argo CD | `https://argocd.<tailnet>.ts.net` | argocd.karim-portfolio.xyz |
 | Grafana | `https://grafana.<tailnet>.ts.net` | grafana.karim-portfolio.xyz |
 | Headlamp | `https://headlamp.<tailnet>.ts.net` | headlamp.karim-portfolio.xyz |
-| Jaeger | `https://jaeger.<tailnet>.ts.net` | jaeger.karim-portfolio.xyz |
+| Jaeger (replaced by Tempo, see tempo.md: traces now in Grafana) | removed | jaeger.karim-portfolio.xyz |
 | Vault UI/API | `https://vault.<tailnet>.ts.net` | vault-ui.karim-portfolio.xyz |
 | pgAdmin | `https://pgadmin.<tailnet>.ts.net` | pgadmin.karim-portfolio.xyz |
 

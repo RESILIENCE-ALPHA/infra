@@ -18,7 +18,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-options: Prune=false,Delete=false
 ---
-# Admin tools: observability stack (Loki, Promtail, Prometheus, Grafana, Jaeger) and Headlamp.
+# Admin tools: observability stack (Loki, Promtail, Prometheus, Grafana, Tempo) and Headlamp.
 apiVersion: v1
 kind: Namespace
 metadata:

@@ -1,6 +1,10 @@
 # Supervision (Prometheus) - namespace: admin
 server:
   retention: 15d
+  # remote-write receiver: Tempo's metrics generator pushes span metrics and the service graph.
+  extraFlags:
+    - web.enable-lifecycle
+    - web.enable-remote-write-receiver
   persistentVolume:
     enabled: true
     size: 10Gi
