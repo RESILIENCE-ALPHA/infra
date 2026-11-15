@@ -19,9 +19,15 @@
   serial: 1
   roles:
     - k3s_server
+    - role: flannel_watchdog
+      vars:
+        flannel_watchdog_service: k3s
 
 - name: K3s agents
   hosts: k3s_agents
   become: true
   roles:
     - k3s_agent
+    - role: flannel_watchdog
+      vars:
+        flannel_watchdog_service: k3s-agent

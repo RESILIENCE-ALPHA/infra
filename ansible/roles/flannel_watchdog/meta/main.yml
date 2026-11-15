@@ -1,0 +1,11 @@
+---
+galaxy_info:
+  role_name: flannel_watchdog
+  author: resilience-alpha
+  description: Restarts the k3s service when flannel.1 is missing while cni0 exists.
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Ubuntu
+      versions: [noble]
+dependencies: []

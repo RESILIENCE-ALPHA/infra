@@ -1,0 +1,8 @@
+# {{ ansible_managed }}
+[Unit]
+Description=Restart {{ flannel_watchdog_service }} if the flannel tunnel (flannel.1) is missing
+After={{ flannel_watchdog_service }}.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/flannel-watchdog {{ flannel_watchdog_service }}
