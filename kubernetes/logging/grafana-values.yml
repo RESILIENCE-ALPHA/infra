@@ -22,15 +22,39 @@ datasources:
     datasources:
       - name: Prometheus
         type: prometheus
+        uid: prometheus
         url: http://prometheus-server.admin.svc.cluster.local
         isDefault: true
       - name: Loki
         type: loki
+        uid: loki
         url: http://loki-gateway.admin.svc.cluster.local
+      # Traces (kubernetes/logging/tempo-values.yml). Service graph and span metrics come from
+      # Tempo's metrics generator, stored in Prometheus.
+      - name: Tempo
+        type: tempo
+        uid: tempo
+        url: http://tempo.admin.svc.cluster.local:3200
+        jsonData:
+          serviceMap:
+            datasourceUid: prometheus
+          nodeGraph:
+            enabled: true
+          lokiSearch:
+            datasourceUid: loki
+          # "Logs for this span": same app and namespace in Loki, around the span's time.
+          tracesToLogsV2:
+            datasourceUid: loki
+            spanStartTimeShift: "-5m"
+            spanEndTimeShift: "5m"
+            filterByTraceID: false
+            tags:
+              - {key: service.name, value: app}
+              - {key: k8s.namespace.name, value: namespace}
+    # Jaeger was replaced by Tempo: remove its data source.
+    deleteDatasources:
       - name: Jaeger
-        type: jaeger
-        uid: jaeger
-        url: http://jaeger.admin.svc.cluster.local:16686
+        orgId: 1
 
 initChownData:
   enabled: false

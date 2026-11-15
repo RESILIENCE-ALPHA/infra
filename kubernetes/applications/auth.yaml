@@ -24,7 +24,7 @@ spec:
           command: [kubectl, wait, --for=condition=complete, job/epsi-pay-database-seed, --timeout=600s]
         # Tracing without touching the app: copies the OpenTelemetry Node auto-instrumentation
         # (http, express, nestjs-core...) into a shared volume, loaded through NODE_OPTIONS below.
-        # Spans go to Jaeger (kubernetes/logging/jaeger.yaml) and join APISIX's (B3 headers).
+        # Spans go to Tempo (kubernetes/logging/tempo-values.yml) and join APISIX's (B3 headers).
         - name: otel-autoinstrumentation
           image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-nodejs:0.77.0
           command: [cp, -r, /autoinstrumentation/., /otel-auto-instrumentation/]
@@ -54,12 +54,12 @@ spec:
             - name: OTEL_SERVICE_NAME
               value: epsi-pay-auth
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: http://jaeger.admin.svc.cluster.local:4318
+              value: http://tempo.admin.svc.cluster.local:4318
             - name: OTEL_EXPORTER_OTLP_PROTOCOL
               value: http/protobuf
             - name: OTEL_TRACES_EXPORTER
               value: otlp
-            - name: OTEL_METRICS_EXPORTER   # Jaeger only takes traces
+            - name: OTEL_METRICS_EXPORTER   # Tempo only takes traces
               value: none
             - name: OTEL_LOGS_EXPORTER
               value: none

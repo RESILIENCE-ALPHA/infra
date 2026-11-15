@@ -9,7 +9,7 @@ Enforced by k3s's built-in kube-router. Ingress only for now: default deny, then
 | postgres | auth, payment, pgadmin, postgres-backup, epsi-pay-database (seed); `service-ia` in `ia` | 5432 |
 | pgadmin | Tailscale proxy (`tailscale` namespace) only | 80 |
 
-Not restricted yet: egress (DNS, Jaeger, Vault, internet), other namespaces.
+Not restricted yet: egress (DNS, Tempo, Vault, internet), other namespaces.
 
 ## 0. Before merging · dev container
 

@@ -1,0 +1,39 @@
+# Grafana Tempo (distributed tracing), chart grafana-community/tempo 3.2.1 (Tempo 3.1, single binary),
+# synced by Argo CD (gitops/apps/tempo.yaml). Replaces Jaeger.
+# Receivers: OTLP HTTP 4318 from epsi-pay-auth / epsi-pay-payment (OpenTelemetry auto-instrumentation)
+# and Zipkin 9411 from the APISIX `zipkin` plugin (kubernetes/apisix/tracing.yaml).
+# No UI of its own: traces are read in Grafana (Tempo data source: search, trace view, service graph).
+# The metrics generator turns spans into RED metrics and a service graph, written to Prometheus.
+tempo:
+  retention: 168h            # 7 days of traces
+  reportingEnabled: false    # no usage report to Grafana Labs
+  resources:
+    requests: {cpu: 50m, memory: 256Mi}
+    limits: {memory: 1Gi}
+  extraEnv:
+    - name: GOMEMLIMIT       # Go garbage collector works to stay under the container limit
+      value: 900MiB
+  # Merged with the chart's receivers (OTLP gRPC/HTTP, Jaeger): adds Zipkin for APISIX.
+  receivers:
+    zipkin:
+      endpoint: 0.0.0.0:9411
+  metricsGenerator:
+    enabled: true
+    remoteWriteUrl: http://prometheus-server.admin.svc.cluster.local/api/v1/write
+  overrides:
+    defaults:
+      metrics_generator:
+        processors: [service-graphs, span-metrics]
+
+persistence:
+  enabled: true
+  size: 5Gi
+  storageClassName: local-path
+
+# Tempo exposes its own metrics on 3200: scraped by Prometheus (TargetDown alert if it stops).
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "3200"
+
+nodeSelector:
+  node-role.kubernetes.io/control-plane: "true"
