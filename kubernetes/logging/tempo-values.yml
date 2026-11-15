@@ -7,6 +7,9 @@
 tempo:
   retention: 168h            # 7 days of traces
   reportingEnabled: false    # no usage report to Grafana Labs
+  # Grafana's Tempo data source streams search results over HTTP (gRPC); without this, Explore → Tempo
+  # keeps loading forever.
+  streamOverHttpEnabled: true
   resources:
     requests: {cpu: 50m, memory: 256Mi}
     limits: {memory: 1Gi}
