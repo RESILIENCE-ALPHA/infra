@@ -8,8 +8,13 @@ metadata:
   namespace: applications
   labels:
     app: epsi-pay-front
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"    # after auth/payment (wave 0)
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: {maxUnavailable: 0, maxSurge: 1}   # old pod stays until the new one is Ready
   selector:
     matchLabels:
       app: epsi-pay-front
@@ -22,8 +27,8 @@ spec:
         - name: ghcr-credentials
       containers:
         - name: front
-          image: ghcr.io/resilience-alpha/epsi-pay-front:latest
-          imagePullPolicy: Always
+          image: ghcr.io/resilience-alpha/epsi-pay-front:latest   # tag replaced by kustomize
+          imagePullPolicy: IfNotPresent
           env:
             # The default (127.0.0.11) is Docker's DNS; nginx's `resolver` needs the cluster DNS here
             - name: NGINX_RESOLVER
@@ -86,6 +91,20 @@ spec:
         - type: URLRewrite
           urlRewrite:
             path: {type: ReplaceFullPath, replaceFullPath: /me}
+      backendRefs:
+        - name: epsi-pay-auth
+          port: 3000
+    # Biometric login (WebAuthn: face / fingerprint) -> auth /webauthn/*
+    # One prefix rule rather than exact paths, because DELETE /credentials/{id} carries a dynamic
+    # segment. Still scoped to /webauthn, so it cannot reach /docs without basic auth either.
+    # Covers: register/options, register/verify, login/options, login/verify, credentials,
+    # credentials/{id}. Nothing biometric crosses this route: only public keys and signatures.
+    - matches:
+        - path: {type: PathPrefix, value: /api/auth/webauthn}
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path: {type: ReplacePrefixMatch, replacePrefixMatch: /webauthn}
       backendRefs:
         - name: epsi-pay-auth
           port: 3000

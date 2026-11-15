@@ -7,6 +7,9 @@ metadata:
     app: epsi-pay-payment
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: {maxUnavailable: 0, maxSurge: 1}   # old pod stays until the new one is Ready
   selector:
     matchLabels:
       app: epsi-pay-payment
@@ -32,8 +35,8 @@ spec:
             - {name: otel-auto-instrumentation, mountPath: /otel-auto-instrumentation}
       containers:
         - name: payment
-          image: ghcr.io/resilience-alpha/epsi-pay-payment:latest
-          imagePullPolicy: Always
+          image: ghcr.io/resilience-alpha/epsi-pay-payment:latest   # tag replaced by kustomize
+          imagePullPolicy: IfNotPresent
           env:
             - name: PORT
               value: "3000"
@@ -75,6 +78,15 @@ spec:
               value: deployment.environment.name=prod,k8s.namespace.name=applications
           ports:
             - containerPort: 3000
+          readinessProbe:
+            httpGet: {path: /health, port: 3000}
+            periodSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet: {path: /health, port: 3000}
+            initialDelaySeconds: 30         # Nest + OTel auto-instrumentation start slowly
+            periodSeconds: 10
+            failureThreshold: 6
           volumeMounts:
             - {name: otel-auto-instrumentation, mountPath: /otel-auto-instrumentation, readOnly: true}
       volumes:
