@@ -7,6 +7,9 @@ metadata:
     app: epsi-pay-auth
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: {maxUnavailable: 0, maxSurge: 1}   # old pod stays until the new one is Ready
   selector:
     matchLabels:
       app: epsi-pay-auth
@@ -32,8 +35,8 @@ spec:
             - {name: otel-auto-instrumentation, mountPath: /otel-auto-instrumentation}
       containers:
         - name: auth
-          image: ghcr.io/resilience-alpha/epsi-pay-auth:latest
-          imagePullPolicy: Always
+          image: ghcr.io/resilience-alpha/epsi-pay-auth:latest   # tag replaced by kustomize
+          imagePullPolicy: IfNotPresent
           env:
             - name: PORT
               value: "3000"
@@ -49,6 +52,17 @@ spec:
               valueFrom: {secretKeyRef: {name: postgres-epsi-pay-credentials, key: password}}
             - name: DATABASE_URL
               value: postgresql://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)
+            # Biometric login (WebAuthn). RP ID is the host serving the SPA, with no scheme or
+            # port: a credential registered here is unusable on any other domain, which is what
+            # makes phishing ineffective. Scoped to app. rather than the apex on purpose, so the
+            # sibling admin subdomains (grafana, vault-ui, jaeger...) cannot use EPSI Pay keys.
+            # ORIGINS is the full origin the browser reports; the SPA calls its own origin.
+            - name: WEBAUTHN_RP_ID
+              value: app.karim-portfolio.xyz
+            - name: WEBAUTHN_RP_NAME
+              value: EPSI Pay
+            - name: WEBAUTHN_ORIGINS
+              value: https://app.karim-portfolio.xyz
             - name: NODE_OPTIONS
               value: --require /otel-auto-instrumentation/autoinstrumentation.js
             - name: OTEL_SERVICE_NAME
@@ -75,6 +89,15 @@ spec:
               value: deployment.environment.name=prod,k8s.namespace.name=applications
           ports:
             - containerPort: 3000
+          readinessProbe:
+            httpGet: {path: /health, port: 3000}
+            periodSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet: {path: /health, port: 3000}
+            initialDelaySeconds: 30         # Nest + OTel auto-instrumentation start slowly
+            periodSeconds: 10
+            failureThreshold: 6
           volumeMounts:
             - {name: otel-auto-instrumentation, mountPath: /otel-auto-instrumentation, readOnly: true}
       volumes:

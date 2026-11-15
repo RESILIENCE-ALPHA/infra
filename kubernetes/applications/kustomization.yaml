@@ -11,3 +11,10 @@ resources:
   - front.yaml
   - pgadmin.yaml
   - network-policies.yaml
+images:
+  - name: ghcr.io/resilience-alpha/epsi-pay-auth
+    newTag: "20261115.9"
+  - name: ghcr.io/resilience-alpha/epsi-pay-payment
+    newTag: "20261115.9"
+  - name: ghcr.io/resilience-alpha/epsi-pay-front
+    newTag: "20261115.9"
