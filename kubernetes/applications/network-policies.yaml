@@ -66,7 +66,7 @@ spec:
             matchExpressions:
               - key: app
                 operator: In
-                values: [epsi-pay-auth, epsi-pay-payment, pgadmin, postgres-backup, epsi-pay-database]
+                values: [epsi-pay-auth, epsi-pay-payment, pgadmin, postgres-backup, epsi-pay-database, epsi-pay-migrate]
         - namespaceSelector:
             matchLabels: {kubernetes.io/metadata.name: ia}
           podSelector:

@@ -1,9 +1,11 @@
 # EPSI Pay applications, synced by Argo CD (gitops/apps/epsi-pay.yaml).
 # Postgres has its own app (postgres/), synced first. The seed Job has its own app (seed/).
+# database-migrate.yaml: PreSync hook, applies the Prisma migrations before each sync.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ghcr-credentials.yaml
+  - database-migrate.yaml
   - seed-waiter.yaml
   - auth.yaml
   - payment.yaml
@@ -12,6 +14,9 @@ resources:
   - pgadmin.yaml
   - network-policies.yaml
 images:
+  # Same epsi_pay commit as auth and payment: its migrations match their code.
+  - name: ghcr.io/resilience-alpha/epsi-pay-database
+    newTag: "20261116.N"
   - name: ghcr.io/resilience-alpha/epsi-pay-auth
     newTag: "20261116.10"
   - name: ghcr.io/resilience-alpha/epsi-pay-payment
