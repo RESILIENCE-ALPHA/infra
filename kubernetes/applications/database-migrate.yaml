@@ -1,0 +1,62 @@
+# Database migrations, run by Argo CD BEFORE every sync of the epsi-pay app (PreSync hook):
+# `npm run migrate` in the epsi-pay-database image applies the pending Prisma migrations
+# (database/prisma/migrations in the epsi_pay repo), so new tables and columns exist before the
+# new auth / payment pods start. It never deletes data. If it fails, the sync stops and the
+# running version keeps serving.
+#
+# First run on the existing database: it was created by `db push`, so the initial migration
+# 0_init is marked as already applied (baseline) instead of being executed.
+# Logs of the last run: kubectl -n applications logs job/epsi-pay-migrate
+#
+# The image tag is set in kustomization.yaml (epsi-pay-database): use the tag CI built from the
+# same epsi_pay commit as auth and payment.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: epsi-pay-migrate
+  namespace: applications
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    # Kept until the next sync, so its logs can be read.
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+  labels:
+    app: epsi-pay-migrate
+spec:
+  backoffLimit: 1
+  activeDeadlineSeconds: 600
+  template:
+    metadata:
+      labels:
+        app: epsi-pay-migrate
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+        - name: ghcr-credentials
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: migrate
+          image: ghcr.io/resilience-alpha/epsi-pay-database:latest   # tag replaced by kustomize
+          imagePullPolicy: IfNotPresent
+          command: [npm, run, migrate]
+          env:
+            - name: DB_HOST
+              valueFrom: {secretKeyRef: {name: postgres-epsi-pay-credentials, key: host}}
+            - name: DB_PORT
+              valueFrom: {secretKeyRef: {name: postgres-epsi-pay-credentials, key: port}}
+            - name: DB_NAME
+              valueFrom: {secretKeyRef: {name: postgres-epsi-pay-credentials, key: database}}
+            - name: DB_USER
+              valueFrom: {secretKeyRef: {name: postgres-epsi-pay-credentials, key: username}}
+            - name: DB_PASSWORD
+              valueFrom: {secretKeyRef: {name: postgres-epsi-pay-credentials, key: password}}
+          resources:
+            requests: {cpu: 50m, memory: 128Mi}
+            limits: {memory: 512Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
