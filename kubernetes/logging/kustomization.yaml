@@ -5,6 +5,7 @@ kind: Kustomization
 namespace: admin
 resources:
   - grafana-externalsecret.yaml
+  - grafana-pvc.yaml
   - alertmanager-discord-externalsecret.yaml
 configMapGenerator:
   - name: grafana-dashboard-apisix-api-logs
