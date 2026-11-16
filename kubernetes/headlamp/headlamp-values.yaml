@@ -11,3 +11,12 @@ clusterRoleBinding:
 resources:
   requests: {cpu: 50m, memory: 64Mi}
   limits: {memory: 256Mi}
+
+# Admin tools run on admin-node (labelled and tainted node-role/admin=true by Ansible).
+nodeSelector:
+  node-role/admin: "true"
+tolerations:
+  - key: node-role/admin
+    operator: Equal
+    value: "true"
+    effect: NoSchedule

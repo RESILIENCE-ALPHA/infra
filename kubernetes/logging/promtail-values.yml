@@ -1,5 +1,5 @@
 # Promtail (chart grafana/promtail 6.17.1): ships pod logs to Loki.
-# Run on every node, apps-node included (tainted location=home): its pod logs go to Loki too.
+# Run on every node, apps-node (tainted location=home) and admin-node (tainted node-role/admin) included.
 tolerations:
   - key: node-role.kubernetes.io/master
     operator: Exists
@@ -10,6 +10,10 @@ tolerations:
   - key: location
     operator: Equal
     value: home
+    effect: NoSchedule
+  - key: node-role/admin
+    operator: Equal
+    value: "true"
     effect: NoSchedule
 config:
   clients:

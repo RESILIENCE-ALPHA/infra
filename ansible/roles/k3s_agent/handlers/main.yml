@@ -4,3 +4,5 @@
     name: k3s-agent
     state: restarted
     daemon_reload: true
+  # In check mode on a new node, k3s is not installed yet: there is no service to restart.
+  when: not ansible_check_mode
