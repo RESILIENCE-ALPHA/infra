@@ -38,5 +38,11 @@ podAnnotations:
   prometheus.io/scrape: "true"
   prometheus.io/port: "3200"
 
+# Admin tools run on admin-node (labelled and tainted node-role/admin=true by Ansible).
 nodeSelector:
-  node-role.kubernetes.io/control-plane: "true"
+  node-role/admin: "true"
+tolerations:
+  - key: node-role/admin
+    operator: Equal
+    value: "true"
+    effect: NoSchedule

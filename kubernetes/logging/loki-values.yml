@@ -20,6 +20,23 @@ singleBinary:
     persistence:
         enabled: true
         size: 10Gi
+    # Admin tools run on admin-node (labelled and tainted node-role/admin=true by Ansible).
+    nodeSelector:
+        node-role/admin: "true"
+    tolerations:
+        - key: node-role/admin
+          operator: Equal
+          value: "true"
+          effect: NoSchedule
+# loki-gateway (nginx in front of Loki): next to Loki. The memcached caches stay where they are.
+gateway:
+    nodeSelector:
+        node-role/admin: "true"
+    tolerations:
+        - key: node-role/admin
+          operator: Equal
+          value: "true"
+          effect: NoSchedule
 read:
     replicas: 0
 write:

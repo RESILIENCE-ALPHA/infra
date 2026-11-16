@@ -1,0 +1,16 @@
+# Prometheus server's data volume on admin-node (TSDB, 15 days of metrics). local-path creates the
+# folder on the node where the pod is scheduled, so the volume follows the server's nodeSelector.
+# The previous claim (prometheus-server, on the VPS) is kept until it is deleted by hand.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: prometheus-data
+  namespace: admin
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false   # never pruned or deleted by Argo CD
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 10Gi

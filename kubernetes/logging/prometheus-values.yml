@@ -7,20 +7,29 @@ server:
     - web.enable-remote-write-receiver
   persistentVolume:
     enabled: true
-    size: 10Gi
-    annotations:
-      argocd.argoproj.io/sync-options: Prune=false,Delete=false   # Argo CD never prunes or deletes the metrics
-    # Bound to the existing volume (kept when moving from the logging namespace). Declared here so
-    # the rendered claim matches the live one: a bound claim's spec is immutable.
-    storageClass: local-path
-    volumeName: pvc-cf9d15a0-ff3c-446a-b73d-4ef9885ef4a6
+    # Claim declared in kubernetes/logging/prometheus-pvc.yaml (logging app), on admin-node.
+    existingClaim: prometheus-data
+  # Admin tools run on admin-node (labelled and tainted node-role/admin=true by Ansible).
+  nodeSelector:
+    node-role/admin: "true"
+  tolerations:
+    - key: node-role/admin
+      operator: Equal
+      value: "true"
+      effect: NoSchedule
 
-# Alertmanager: one replica on the VPS, alerts to Discord (webhook from Vault, mounted as a file).
+# Alertmanager: one replica on admin-node, next to Prometheus, alerts to Discord (webhook from
+# Vault, mounted as a file).
 # Runbook: docs/runbooks/alerting.md.
 alertmanager:
   enabled: true
   nodeSelector:
-    node-role.kubernetes.io/control-plane: "true"
+    node-role/admin: "true"
+  tolerations:
+    - key: node-role/admin
+      operator: Equal
+      value: "true"
+      effect: NoSchedule
   persistence:
     enabled: true
     size: 100Mi
@@ -168,3 +177,13 @@ serverFiles:
               summary: "Scrape target {{ $labels.job }} / {{ $labels.instance }} is down"
 prometheus-pushgateway:
   enabled: false
+
+# kube-state-metrics (object state: deployments, jobs, pods...): no data, runs next to Prometheus.
+kube-state-metrics:
+  nodeSelector:
+    node-role/admin: "true"
+  tolerations:
+    - key: node-role/admin
+      operator: Equal
+      value: "true"
+      effect: NoSchedule
