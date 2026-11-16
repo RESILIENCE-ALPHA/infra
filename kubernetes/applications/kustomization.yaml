@@ -16,10 +16,10 @@ resources:
 images:
   # Same epsi_pay commit as auth and payment: its migrations match their code.
   - name: ghcr.io/resilience-alpha/epsi-pay-database
-    newTag: "20261116.N"
+    newTag: "20261116.12"
   - name: ghcr.io/resilience-alpha/epsi-pay-auth
-    newTag: "20261116.10"
+    newTag: "20261116.12"
   - name: ghcr.io/resilience-alpha/epsi-pay-payment
-    newTag: "20261116.10"
+    newTag: "20261116.12"
   - name: ghcr.io/resilience-alpha/epsi-pay-front
-    newTag: "20261116.11"
+    newTag: "20261116.12"
