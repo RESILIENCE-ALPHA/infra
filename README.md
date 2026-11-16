@@ -12,6 +12,7 @@ kubernetes/                           Manifests and Helm values synced by Argo C
 .github/workflows/                    CI: lint (YAML, Ansible, Kubernetes manifests), Terraform plan/apply
 docs/runbooks/                        Step-by-step procedures (migrations, VPS reboot)
 docs/wsl-node.md                      Windows laptop as a k3s agent (WSL2): setup and autostart
+kubernetes/docs-site/                 Docs site: guides (site/*.md) + interactive diagram, on admin-node, tailnet only
 ```
 
 ## k3s cluster (Ansible)

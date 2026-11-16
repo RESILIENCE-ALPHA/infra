@@ -86,3 +86,20 @@ spec:
   tls:
     - hosts:
         - pgadmin
+---
+# Documentation site (kubernetes/docs-site)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tailnet-docs
+  namespace: admin
+spec:
+  ingressClassName: tailscale
+  defaultBackend:
+    service:
+      name: docs-site
+      port:
+        number: 80
+  tls:
+    - hosts:
+        - docs

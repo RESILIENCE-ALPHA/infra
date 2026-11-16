@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Workshop M2 Platform</title>
+  <meta name="description" content="Architecture, networks, installation and operations of the Workshop M2 Kubernetes platform (EPSI Pay).">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f172a'/%3E%3Ccircle cx='10' cy='16' r='4' fill='%2334d399'/%3E%3Ccircle cx='22' cy='10' r='4' fill='%23a78bfa'/%3E%3Ccircle cx='22' cy='22' r='4' fill='%2338bdf8'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#schema">
+      <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span>Workshop M2 <b>Platform</b></span>
+    </a>
+    <nav class="tabs" aria-label="Sections">
+      <a href="#schema" data-view="schema">Live diagram</a>
+      <a href="#how-it-works" data-view="how-it-works">How it works</a>
+      <a href="#install" data-view="install">Installation</a>
+      <a href="#teams" data-view="teams">Teams</a>
+      <a href="#new-feature" data-view="new-feature">Ship a feature</a>
+      <a href="#operations" data-view="operations">Operations</a>
+    </nav>
+    <button class="theme-toggle" type="button" aria-label="Toggle light or dark theme" title="Theme">◐</button>
+  </header>
+
+  <main>
+    <!-- Interactive diagram -->
+    <section id="view-schema" class="view" hidden>
+      <div class="schema-head">
+        <h1>How the platform talks</h1>
+        <p class="lede">Three nodes, seven network layers, one GitOps loop. Switch the <b>view</b> to recolour the map,
+          pick a <b>scenario</b> to watch traffic light up nodes and pods, click any box for details.</p>
+      </div>
+
+      <div class="control-row">
+        <span class="row-label">View</span>
+        <div class="view-bar" role="group" aria-label="Views"></div>
+      </div>
+      <p class="view-desc"></p>
+
+      <div class="layer-bar" hidden>
+        <span class="row-label">Focus a layer</span>
+        <div class="layer-chips"></div>
+      </div>
+
+      <div class="control-row">
+        <span class="row-label">Scenario</span>
+        <div class="scenario-bar" role="tablist" aria-label="Scenarios"></div>
+      </div>
+
+      <div class="schema-grid">
+        <div class="stage">
+          <div class="stage-tools">
+            <div class="player">
+              <button type="button" data-act="prev" title="Previous step (←)">⏮</button>
+              <button type="button" data-act="play" class="primary" title="Play / pause (space)">▶ Play</button>
+              <button type="button" data-act="next" title="Next step (→)">⏭</button>
+              <button type="button" data-act="reset" title="Back to the start">↺</button>
+            </div>
+            <label class="speed">Speed
+              <input type="range" min="0.5" max="2.5" step="0.25" value="1" aria-label="Animation speed">
+            </label>
+            <div class="zoom">
+              <button type="button" data-zoom="-1" title="Zoom out">−</button>
+              <span class="zoom-val">100%</span>
+              <button type="button" data-zoom="1" title="Zoom in">+</button>
+            </div>
+          </div>
+          <div class="svg-wrap"><svg id="schema" viewBox="0 0 1560 1000" role="img" aria-label="Animated diagram of the cluster: three nodes, namespaces, pods, services and networks"></svg></div>
+          <div class="legend"></div>
+          <p class="hint">Namespaces are logical and cluster-wide: boxes show where their pods run. Click a node's title area for its details.</p>
+        </div>
+
+        <aside class="panel">
+          <div class="card step-card">
+            <div class="card-kicker"><span class="step-num">Scenario</span></div>
+            <h2 class="step-title">Choose a scenario</h2>
+            <p class="step-text">Each scenario follows real traffic through the cluster, hop by hop.</p>
+            <div class="netpol-tag" hidden></div>
+            <div class="stack" aria-label="Packet layers"></div>
+          </div>
+          <ol class="step-list"></ol>
+          <div class="card info-card" hidden>
+            <div class="card-kicker info-kind"></div>
+            <h2 class="info-title"></h2>
+            <dl class="info-meta"></dl>
+            <p class="info-text"></p>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- Documents (Markdown, rendered in the page) -->
+    <section id="view-doc" class="view" hidden>
+      <div class="doc-grid">
+        <nav class="toc" aria-label="Contents"><div class="toc-title" role="button" tabindex="0">Contents</div><ol></ol></nav>
+        <article class="doc"><p class="muted">Loading…</p></article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    Source: <code>RESILIENCE-ALPHA/infra</code> · <code>kubernetes/docs-site/</code> · deployed by Argo CD on admin-node, served on the tailnet only.
+  </footer>
+
+  <script src="marked.min.js"></script>
+  <script src="schema.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
