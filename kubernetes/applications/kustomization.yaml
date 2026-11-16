@@ -17,4 +17,4 @@ images:
   - name: ghcr.io/resilience-alpha/epsi-pay-payment
     newTag: "20261116.10"
   - name: ghcr.io/resilience-alpha/epsi-pay-front
-    newTag: "20261116.10"
+    newTag: "20261116.11"
