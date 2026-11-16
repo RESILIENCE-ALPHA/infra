@@ -65,8 +65,24 @@ spec:
   hostnames:
     - app.karim-portfolio.xyz
   rules:
-    # /api/auth/{login,logout,me} -> auth /login etc. Exact paths, so /api/auth/docs never
-    # reaches Swagger without basic auth.
+    # /api/auth/{signup,login,logout,me} -> auth /signup, /login etc. Exact paths, so
+    # /api/auth/docs never reaches Swagger without basic auth.
+    # signup is the only unauthenticated endpoint that writes (user + wallet + audit row), so it
+    # carries its own per-IP quota (PluginConfig/signup-ratelimit at the end of this file).
+    - matches:
+        - path: {type: Exact, value: /api/auth/signup}
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path: {type: ReplaceFullPath, replaceFullPath: /signup}
+        - type: ExtensionRef
+          extensionRef:
+            group: apisix.apache.org
+            kind: PluginConfig
+            name: signup-ratelimit
+      backendRefs:
+        - name: epsi-pay-auth
+          port: 3000
     - matches:
         - path: {type: Exact, value: /api/auth/login}
       filters:
@@ -94,17 +110,18 @@ spec:
       backendRefs:
         - name: epsi-pay-auth
           port: 3000
-    # Biometric login (WebAuthn: face / fingerprint) -> auth /webauthn/*
-    # One prefix rule rather than exact paths, because DELETE /credentials/{id} carries a dynamic
-    # segment. Still scoped to /webauthn, so it cannot reach /docs without basic auth either.
-    # Covers: register/options, register/verify, login/options, login/verify, credentials,
-    # credentials/{id}. Nothing biometric crosses this route: only public keys and signatures.
+    # Biometric login (WebAuthn: face / fingerprint) -> auth /passkeys/*
+    # One prefix rule rather than exact paths, because POST /passkeys/{id}/revoke carries a dynamic
+    # segment. Still scoped to /passkeys, so it cannot reach /docs without basic auth either.
+    # Covers: login/options, login/verify, register/options, register/verify, the list (GET
+    # /passkeys) and {id}/revoke. Nothing biometric crosses this route: only public keys and
+    # signatures.
     - matches:
-        - path: {type: PathPrefix, value: /api/auth/webauthn}
+        - path: {type: PathPrefix, value: /api/auth/passkeys}
       filters:
         - type: URLRewrite
           urlRewrite:
-            path: {type: ReplacePrefixMatch, replacePrefixMatch: /webauthn}
+            path: {type: ReplacePrefixMatch, replacePrefixMatch: /passkeys}
       backendRefs:
         - name: epsi-pay-auth
           port: 3000
@@ -150,6 +167,39 @@ spec:
       backendRefs:
         - name: epsi-pay-front
           port: 8080
+---
+# Per-IP quota on account creation (see the /api/auth/signup rule above). 10 accounts per hour is
+# far above real use and well below what makes mass signup worthwhile.
+#
+# policy: local keeps the counter in an nginx shared memory zone (lua_shared_dict
+# plugin-limit-count), which every worker process in a pod reads and writes, so workers do NOT each
+# get their own quota and no Redis is needed. The boundary is the pod, not the worker: at the
+# current single data plane replica the effective limit is exactly 10/h, but with N replicas each
+# keeps its own counter and the ceiling becomes 10*N -- connections are not pinned to a pod, so a
+# caller can spend a fresh budget on each one. Switch policy to redis, against a shared Redis, if
+# the data plane is ever scaled out.
+#
+# Two limits that apply even at one replica:
+#   - the counter is in shared memory, so a pod restart or an Argo CD rollout resets it to zero.
+#   - key: remote_addr is the true client IP only because externalTrafficPolicy: Local preserves it
+#     and APISIX trusts no proxy for X-Real-IP (set_real_ip_from is loopback only). Adding a CDN or
+#     another proxy in front without listing it in set_real_ip_from would make remote_addr the proxy
+#     address, collapsing this into one global 10/h bucket that locks out legitimate signups.
+apiVersion: apisix.apache.org/v1alpha1
+kind: PluginConfig
+metadata:
+  name: signup-ratelimit
+  namespace: applications
+spec:
+  plugins:
+    - name: limit-count
+      config:
+        count: 10
+        time_window: 3600
+        key_type: var
+        key: remote_addr
+        policy: local
+        rejected_code: 429
 ---
 # TEMPORARY (see the /api/wallets rule above): wraps the bare array returned by payment's GET /wallets
 # into {"wallets": [...]}. If-None-Match / ETag are dropped so browsers never reuse a cached bare
