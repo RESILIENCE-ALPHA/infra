@@ -37,6 +37,28 @@ spec:
         runAsUser: 1000
         seccompProfile:
           type: RuntimeDefault
+      # A new pod is allowed through the NetworkPolicies only once kube-router has added its IP
+      # (a few seconds), and Postgres may be restarting: wait until the port answers (max 2 min)
+      # instead of failing the whole sync on the first connection attempt.
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox:1.37
+          command:
+            - sh
+            - -c
+            - |
+              for i in $(seq 1 60); do
+                nc -z -w 2 postgres.applications.svc.cluster.local 5432 && { echo "postgres reachable"; exit 0; }
+                echo "waiting for postgres ($i/60)"; sleep 2
+              done
+              echo "postgres not reachable after 2 min"; exit 1
+          resources:
+            requests: {cpu: 10m, memory: 16Mi}
+            limits: {memory: 32Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
       containers:
         - name: migrate
           image: ghcr.io/resilience-alpha/epsi-pay-database:latest   # tag replaced by kustomize
