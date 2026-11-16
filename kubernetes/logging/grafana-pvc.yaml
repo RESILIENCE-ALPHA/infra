@@ -1,0 +1,17 @@
+# Grafana's data volume on admin-node (grafana.db: users, folders, dashboards and data sources made
+# in the UI). local-path creates the folder on the node where the pod is scheduled, so the volume
+# follows Grafana's nodeSelector (admin-node) at the first start.
+# The previous volume (claim "grafana", on the VPS) is kept as a fallback until it is deleted by hand.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-data
+  namespace: admin
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false   # never pruned or deleted by Argo CD
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 10Gi
