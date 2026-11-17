@@ -141,9 +141,15 @@ main { padding: 1.5rem; max-width: 1680px; margin: 0 auto; }
 .speed { display: flex; align-items: center; gap: .5rem; color: var(--muted); font-size: .85rem; }
 .speed input { accent-color: var(--accent); width: 110px; }
 .zoom { display: flex; align-items: center; gap: .3rem; margin-left: auto; color: var(--muted); font-size: .82rem; }
+.zoom .fit { min-width: 0; font-size: .8rem; }
 .zoom-val { min-width: 3.2em; text-align: center; font-family: var(--mono); }
-.svg-wrap { overflow: auto; border-radius: 10px; background: var(--bg-2); }
-#schema { display: block; width: 100%; height: auto; min-width: 760px; }
+.svg-wrap { overflow: hidden; border-radius: 10px; background: var(--bg-2); }
+/* Default: the whole diagram fits the frame (width) and the screen height, never wider than its box. */
+#schema { display: block; width: 100%; height: auto; margin: 0 auto; max-width: max(640px, calc((100svh - 150px) * 1.56)); }
+/* Zoomed in: drag to move around (scrollbars stay as a fallback for touch and keyboard). */
+.svg-wrap.zoomed { overflow: auto; cursor: grab; max-height: calc(100svh - 140px); }
+.svg-wrap.zoomed.dragging { cursor: grabbing; user-select: none; }
+.svg-wrap.zoomed #schema { max-width: none; }
 .hint { color: var(--faint); font-size: .8rem; margin: .5rem .3rem .1rem; }
 
 /* Side panel */

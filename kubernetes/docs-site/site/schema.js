@@ -939,12 +939,40 @@
       if (act === 'reset') selectScenario(state.scenario, false);
     });
     document.querySelector('.speed input').addEventListener('input', (e) => { state.speed = parseFloat(e.target.value); });
+    // 100% = the whole diagram fits its frame. Zooming in keeps the centre in view; drag to move around.
     let zoom = 1;
+    const wrap = svg.parentElement;
     document.querySelector('.zoom').addEventListener('click', (e) => {
       const b = e.target.closest('button'); if (!b) return;
-      zoom = Math.min(2.2, Math.max(1, zoom + 0.3 * parseInt(b.dataset.zoom, 10)));
-      svg.style.width = (zoom * 100) + '%'; svg.style.minWidth = (900 * zoom) + 'px';
+      const step = parseInt(b.dataset.zoom, 10);
+      const next = step === 0 ? 1 : Math.min(2.5, Math.max(1, Math.round((zoom + 0.5 * step) * 10) / 10));
+      if (next === zoom) return;
+      const cx = (wrap.scrollLeft + wrap.clientWidth / 2) / wrap.scrollWidth;
+      const cy = (wrap.scrollTop + wrap.clientHeight / 2) / wrap.scrollHeight;
+      zoom = next;
+      wrap.classList.toggle('zoomed', zoom > 1);
+      svg.style.width = zoom > 1 ? (zoom * 100) + '%' : '';
+      wrap.scrollLeft = cx * wrap.scrollWidth - wrap.clientWidth / 2;
+      wrap.scrollTop = cy * wrap.scrollHeight - wrap.clientHeight / 2;
       document.querySelector('.zoom-val').textContent = Math.round(zoom * 100) + '%';
+    });
+    let drag = null;
+    wrap.addEventListener('pointerdown', (e) => {
+      if (zoom === 1 || e.button !== 0 || e.pointerType === 'touch') return;
+      drag = { x: e.clientX, y: e.clientY, l: wrap.scrollLeft, t: wrap.scrollTop, moved: false };
+    });
+    window.addEventListener('pointermove', (e) => {
+      if (!drag) return;
+      const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+      if (!drag.moved && Math.hypot(dx, dy) < 4) return;   // a small move is still a click on a pod or node
+      drag.moved = true; wrap.classList.add('dragging');
+      wrap.scrollLeft = drag.l - dx; wrap.scrollTop = drag.t - dy;
+    });
+    let justDragged = false;   // the click that ends a drag must not select a pod
+    wrap.addEventListener('click', (ev) => { if (justDragged) ev.stopPropagation(); }, { capture: true });
+    window.addEventListener('pointerup', () => {
+      if (drag && drag.moved) { justDragged = true; setTimeout(() => { justDragged = false; }, 0); }
+      drag = null; wrap.classList.remove('dragging');
     });
     document.addEventListener('keydown', (e) => {
       if (document.getElementById('view-schema').hidden) return;
